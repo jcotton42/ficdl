@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from typing import Iterable, Iterator, List, Optional
+from typing import Iterable, Iterator, List, Optional, Tuple
 from xml.sax.saxutils import escape
 
 import logging
@@ -11,17 +11,12 @@ logger = logging.getLogger(__name__)
 
 html_template = '''<!DOCTYPE html>
 <html>
-<head>
-<title></title>
-</head>
 <body>
 </body>
 </html>'''
 
-def make_output_html(story_title: str, chapters: Iterable[(str, Iterator)]) -> str:
+def make_output_html(chapters: Iterable[Tuple[str, Iterator]]) -> str:
     output = BeautifulSoup(html_template, 'html5lib')
-    
-    output.head.title.string = story_title
 
     for (title, text) in chapters:
         h1 = output.new_tag('h1')

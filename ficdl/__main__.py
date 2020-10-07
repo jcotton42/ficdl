@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 import pypandoc
 import sys
 
@@ -27,3 +28,8 @@ except OSError:
     sys.exit(COULD_NOT_INSTALL_PANDOC)
 
 args = parse_args()
+
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
