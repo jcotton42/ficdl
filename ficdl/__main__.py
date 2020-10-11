@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import ficdl
 import logging
 import pypandoc
 import sys
@@ -11,8 +12,12 @@ COULD_NOT_INSTALL_PANDOC = 1
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('story', help='The URL to the story to download')
-    parser.add_argument('-o', '--output', help='What file to output the story to. Attempts to automatically determine if not specified.')
+    parser.add_argument('url', help='The URL to the story to download')
+    parser.add_argument(
+        '-o', '--output',
+        metavar='FILE',
+        help='What file to output the story to. Attempts to automatically determine if not specified.'
+    )
     parser.add_argument(
         '-k', '--kindle',
         action='store_true',
@@ -33,3 +38,5 @@ if args.verbose:
     logging.basicConfig(level=logging.DEBUG)
 else:
     logging.basicConfig(level=logging.INFO)
+
+ficdl.download_story(args.url, args.kindle, args.output)

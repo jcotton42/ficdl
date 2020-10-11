@@ -2,9 +2,11 @@ from bs4 import BeautifulSoup
 from typing import Iterable, Iterator, List, Optional, Tuple
 from xml.sax.saxutils import escape
 
+import ficdl.ffn as ffn
 import logging
 import os
 import pypandoc
+import re
 import tempfile
 
 logger = logging.getLogger(__name__)
@@ -14,6 +16,38 @@ html_template = '''<!DOCTYPE html>
 <body>
 </body>
 </html>'''
+
+invalid_path_chars = re.compile(r'[<>:"/\\|?*]')
+invalid_names = [
+    'con',
+    'prn',
+    'aux',
+    'nul',
+    'com1',
+    'com2',
+    'com3',
+    'com4',
+    'com5',
+    'com6',
+    'com7',
+    'com8',
+    'com9',
+    'lpt1',
+    'lpt2',
+    'lpt3',
+    'lpt4',
+    'lpt5',
+    'lpt6',
+    'lpt7',
+    'lpt8',
+    'lpt9'
+]
+
+def download_story(url: str, kindle: bool, output_path: str):
+    story = ffn.download_story(url)
+    
+    html = make_output_html(zip(story.chapter_names, story.chapter_text))
+    create_epub(html, story.title, story.author, output_path, None)
 
 def make_output_html(chapters: Iterable[Tuple[str, Iterator]]) -> str:
     output = BeautifulSoup(html_template, 'html5lib')
@@ -38,7 +72,7 @@ def create_epub(html: str, title: str, author: str, output_path: str, cover_path
         meta_file = f.name
     
     try:
-        extra_args = [f'--epub-metadata={meta_file}']
+        extra_args = [f'--epub-metadata={meta_file}', '--toc']
         if cover_path:
             extra_args.append(f'--epub-cover-image={cover_path}')
         pypandoc.convert_text(
