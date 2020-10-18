@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as filedialog
+import tkinter.messagebox as messagebox
+
+from ficdl import download_story
 
 class Downloader(tk.Frame):
     def __init__(self, master, window):
@@ -38,8 +43,24 @@ class Downloader(tk.Frame):
             )
         )
         
-        print(file)
+        if file == '':
+            # Cancel was clicked
+            return
+        
         self.output_path.set(file)
 
     def on_download(self):
-        print(self.output_path.get())
+        url = self.url.get().strip()
+        path = self.output_path.get().strip()
+
+        if url == '' or path == '':
+            messagebox.showerror(title='Error', message='You must specify both a URL and a save path.')
+            return
+
+        path = Path(path)
+
+        if path.suffix.casefold() != '.epub'.casefold():
+            messagebox.showerror(title='Unsupported format', message='Only ePub books are supported at the moment.')
+            return
+
+        download_story(url, False, str(path))
