@@ -5,7 +5,7 @@ import tkinter.ttk as ttk
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
 
-from ficdl import download_story
+from ..downloader import download_story
 
 class Downloader(tk.Frame):
     def __init__(self, master, window):
