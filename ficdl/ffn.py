@@ -44,8 +44,8 @@ def extract_cover_url(page: BeautifulSoup) -> str:
         url = 'https://www.fanfiction.net/' + url.lstrip('/')
     return url
 
-def extract_text(page: BeautifulSoup) -> Iterator:
-    return page.find(id='storytext').children
+def extract_text(page: BeautifulSoup) -> List:
+    return list(page.find(id='storytext').children)
 
 def download_story(url: str) -> StoryData:
     prefix, _chap_num, title_from_url = url.rsplit('/', maxsplit=2)
