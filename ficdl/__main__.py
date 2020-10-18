@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
-import ficdl
 import logging
 import pypandoc
 import sys
 
 from bs4 import BeautifulSoup
 
+from .downloader import download_story
 from .gui import gui_main
 
 COULD_NOT_INSTALL_PANDOC = 1
@@ -44,4 +44,4 @@ else:
 if args.url is None:
     gui_main()
 else:
-    ficdl.download_story(args.url, args.kindle, args.output)
+    download_story(args.url, args.kindle, args.output)
