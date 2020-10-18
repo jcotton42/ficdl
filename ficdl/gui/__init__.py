@@ -15,6 +15,9 @@ class Gui(tk.Frame):
 
     def create_widgets(self):
         row = 0
+        tk.Label(self, text="You'll need to use Ctrl+V to paste because tkinter is stupid").grid(row=row, column=0, sticky=tk.W)
+
+        row += 1
         Downloader(self, self.window).grid(row=row, column=0, sticky=tk.W)
 
         row += 1
