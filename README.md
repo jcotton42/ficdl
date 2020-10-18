@@ -1,24 +1,24 @@
 # fzicdl
 
-A Python script for taking stories from fanfic sites and turning them into eBooks for a more comfortable reading experience.
+A Python app for taking stories from fanfic sites and turning them into eBooks for a more comfortable reading experience.
 
 ## Usage
 
 ### GUI
 
-```bash
-python -m ficdl
-```
+Double click `ficdl.pyz`, or run
 
-Proper double-clicking support is coming, see issue #7.
+```bash
+python ficdl.pyz
+```
 
 ### CLI
 
 ```bash
-python -m ficdl <URL> -o name.epub
+python ficdl.pyz <URL> -o name.epub
 ```
 
-Run `python -m ficdl --help` for more options.
+Run `python ficdl.pyz --help` for more options.
 
 ## Installation
 
@@ -26,9 +26,7 @@ Clone this repository, or download as a zip file. I'll have something on the rel
 
 ### Dependencies
 
-* Python 3.8+ (might work on earlier 3.x versions)
-* `beautifulsoup4`, `pypandoc`, and `html5lib`
-  * Install with `python -m pip install -r requirements.txt`
+* Python 3.9+ (might work on earlier 3.x versions)
 
 ## Supported services
 
