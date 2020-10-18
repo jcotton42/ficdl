@@ -1,6 +1,6 @@
 from gzip import GzipFile
 from io import BytesIO
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, List
 from urllib.request import urlopen
 
 import logging
@@ -13,7 +13,7 @@ class StoryData:
     author: str
     cover_url: str
     chapter_names: Iterable[str]
-    chapter_text: Iterable[Iterator]
+    chapter_text: Iterable[List]
 
     def __init__(self, title, author, cover_url, chapter_names, chapter_text):
         self.title = title

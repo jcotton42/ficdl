@@ -50,7 +50,7 @@ def download_story(url: str, kindle: bool, output_path: str):
     html = make_output_html(zip(story.chapter_names, story.chapter_text))
     create_epub(html, story.title, story.author, output_path, None)
 
-def make_output_html(chapters: Iterable[Tuple[str, Iterator]]) -> str:
+def make_output_html(chapters: Iterable[Tuple[str, List]]) -> str:
     output = BeautifulSoup(html_template, 'html5lib')
 
     for (title, text) in chapters:
