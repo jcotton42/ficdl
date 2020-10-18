@@ -1,4 +1,4 @@
-# fzicdl
+# ficdl
 
 A Python app for taking stories from fanfic sites and turning them into eBooks for a more comfortable reading experience.
 
