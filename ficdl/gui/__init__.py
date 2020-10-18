@@ -22,3 +22,8 @@ class Gui(tk.Frame):
 
         row += 1
         SubscriptionManager(self, self.window).grid(row=row, column=0, sticky=tk.W)
+
+def gui_main():
+    root = tk.Tk()
+    root.title('ficdl')
+    Gui(root).mainloop()

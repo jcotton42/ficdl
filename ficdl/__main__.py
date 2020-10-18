@@ -8,11 +8,13 @@ import sys
 
 from bs4 import BeautifulSoup
 
+from .gui import gui_main
+
 COULD_NOT_INSTALL_PANDOC = 1
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('url', help='The URL to the story to download')
+    parser.add_argument('url', nargs='?', default=None, help='The URL to the story to download')
     parser.add_argument(
         '-o', '--output',
         metavar='FILE',
@@ -39,4 +41,7 @@ if args.verbose:
 else:
     logging.basicConfig(level=logging.INFO)
 
-ficdl.download_story(args.url, args.kindle, args.output)
+if args.url is None:
+    gui_main()
+else:
+    ficdl.download_story(args.url, args.kindle, args.output)
