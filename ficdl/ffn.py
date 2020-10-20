@@ -74,6 +74,6 @@ def download_story(url: str, callback: ProgressCallback) -> StoryData:
             chapter = BeautifulSoup(download_and_decompress(url), 'html5lib')
             chapter_text.append(extract_text(chapter))
             
-            callback(ChapterDetails(chapter_names[i - 1], i))
+            callback(ChapterDetails(chapter_names[i - 1], i, len(chapter_names)))
     
     return StoryData(title, author, cover_url, chapter_names, chapter_text)
