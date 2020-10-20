@@ -7,6 +7,7 @@ import sys
 
 from bs4 import BeautifulSoup
 
+from .cli import cli_main
 from .downloader import download_story
 from .gui import gui_main
 
@@ -45,4 +46,4 @@ def main():
     if args.url is None:
         gui_main()
     else:
-        download_story(args.url, args.kindle, args.output)
+        cli_main(args)

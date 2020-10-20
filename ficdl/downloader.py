@@ -9,6 +9,7 @@ import re
 import tempfile
 
 from . import ffn
+from .callbacks import ProgressCallback
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +45,8 @@ invalid_names = [
     'lpt9'
 ]
 
-def download_story(url: str, kindle: bool, output_path: str):
-    story = ffn.download_story(url)
+def download_story(url: str, kindle: bool, output_path: str, callback: ProgressCallback):
+    story = ffn.download_story(url, callback)
 
     html = make_output_html(zip(story.chapter_names, story.chapter_text))
     create_epub(html, story.title, story.author, output_path, None)
