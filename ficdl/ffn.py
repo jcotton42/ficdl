@@ -3,6 +3,7 @@ from random import uniform
 from time import sleep
 from typing import Iterator, List, Optional
 
+from .callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
 from .utils import download_and_decompress, StoryData
 
 import logging
@@ -47,7 +48,7 @@ def extract_cover_url(page: BeautifulSoup) -> str:
 def extract_text(page: BeautifulSoup) -> List:
     return list(page.find(id='storytext').children)
 
-def download_story(url: str) -> StoryData:
+def download_story(url: str, callback: ProgressCallback) -> StoryData:
     prefix, _chap_num, title_from_url = url.rsplit('/', maxsplit=2)
 
     url = f'{prefix}/1/{title_from_url}'
@@ -62,6 +63,8 @@ def download_story(url: str) -> StoryData:
 
     if chapter_names is None:
         chapter_names = [title]
+    
+    callback(InitialStoryDetails(title, author, chapter_names[0], len(chapter_names)))
 
     if len(chapter_names) > 1:
         for i in range(2, len(chapter_names) + 1):
@@ -70,5 +73,7 @@ def download_story(url: str) -> StoryData:
             url = f'{prefix}/{i}/{title_from_url}'
             chapter = BeautifulSoup(download_and_decompress(url), 'html5lib')
             chapter_text.append(extract_text(chapter))
+            
+            callback(ChapterDetails(chapter_names[i - 1], i))
     
     return StoryData(title, author, cover_url, chapter_names, chapter_text)
