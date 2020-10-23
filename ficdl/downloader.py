@@ -1,3 +1,4 @@
+from ficdl.utils import StoryData
 from bs4 import BeautifulSoup
 from typing import Iterable, Iterator, List, Optional, Tuple
 from xml.sax.saxutils import escape
@@ -49,7 +50,7 @@ def download_story(url: str, kindle: bool, output_path: str, callback: ProgressC
     story = ffn.download_story(url, callback)
 
     html = make_output_html(zip(story.chapter_names, story.chapter_text))
-    create_epub(html, story.title, story.author, output_path, None)
+    create_epub(html, story, output_path, None)
 
 def make_output_html(chapters: Iterable[Tuple[str, List]]) -> str:
     output = BeautifulSoup(html_template, 'html5lib')
@@ -62,11 +63,14 @@ def make_output_html(chapters: Iterable[Tuple[str, List]]) -> str:
 
     return str(output)
 
-def create_epub(html: str, title: str, author: str, output_path: str, cover_path: Optional[str]):
+def create_epub(html: str, metadata: StoryData, output_path: str, cover_path: Optional[str]):
+    date = metadata.date_utc.strftime('%Y-%m-%d')
     epub_metadata = f'''
     <dc:language>en-US</dc:language>
-    <dc:title>{escape(title)}</dc:title>
-    <dc:creator>{escape(author)}</dc:creator>
+    <dc:title>{escape(metadata.title)}</dc:title>
+    <dc:creator>{escape(metadata.author)}</dc:creator>
+    <dc:date>{date}</dc:date>
+    <dc:description>{escape(metadata.description)}</dc:description>
     '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False) as f:

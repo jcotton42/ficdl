@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from datetime import datetime
 from random import uniform
 from time import sleep
 from typing import Iterator, List, Optional
@@ -7,7 +8,6 @@ from .callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
 from .utils import download_and_decompress, StoryData
 
 import logging
-import sys
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +21,12 @@ def extract_author(page: BeautifulSoup) -> str:
 
 def extract_chapter_names(page: BeautifulSoup) -> Optional[List[str]]:
     chapters = []
-    data = page.find(id='chap_select').children
+    data = page.find(id='chap_select')
     if data is None:
         # story has only 1 chapter
         return None
 
-    for chapter in data:
+    for chapter in data.children:
         _, title = chapter.string.split('. ', maxsplit=1)
         chapters.append(title)
 
@@ -46,7 +46,16 @@ def extract_cover_url(page: BeautifulSoup) -> str:
     return url
 
 def extract_text(page: BeautifulSoup) -> List:
+    # need to use list() here, otherwise a significant amount of text will not make it to the ebook
+    # no idea why
     return list(page.find(id='storytext').children)
+
+def extract_description(page: BeautifulSoup) -> str:
+    return page.select_one('#profile_top > div').string
+
+def extract_date(page: BeautifulSoup) -> datetime:
+    # update date is either by itself, or the first date
+    return datetime.fromtimestamp(int(page.select('#profile_top span[data-xutime]')[0]['data-xutime']))
 
 def download_story(url: str, callback: ProgressCallback) -> StoryData:
     prefix, _chap_num, title_from_url = url.rsplit('/', maxsplit=2)
@@ -60,6 +69,8 @@ def download_story(url: str, callback: ProgressCallback) -> StoryData:
     cover_url = extract_cover_url(first_chapter)
     chapter_names = extract_chapter_names(first_chapter)
     chapter_text = [extract_text(first_chapter)]
+    description = extract_description(first_chapter)
+    date = extract_date(first_chapter)
 
     if chapter_names is None:
         chapter_names = [title]
@@ -76,4 +87,4 @@ def download_story(url: str, callback: ProgressCallback) -> StoryData:
             
             callback(ChapterDetails(chapter_names[i - 1], i, len(chapter_names)))
     
-    return StoryData(title, author, cover_url, chapter_names, chapter_text)
+    return StoryData(title, author, cover_url, chapter_names, chapter_text, description, date)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from gzip import GzipFile
 from io import BytesIO
 from typing import Iterable, Iterator, List
@@ -14,13 +15,17 @@ class StoryData:
     cover_url: str
     chapter_names: Iterable[str]
     chapter_text: Iterable[List]
+    description: str
+    date_utc: datetime
 
-    def __init__(self, title, author, cover_url, chapter_names, chapter_text):
+    def __init__(self, title, author, cover_url, chapter_names, chapter_text, description, date_utc):
         self.title = title
         self.author = author
         self.cover_url = cover_url
         self.chapter_names = chapter_names
         self.chapter_text = chapter_text
+        self.description = description
+        self.date_utc = date_utc
 
 def download_and_decompress(url):
     with urlopen(url) as response:
