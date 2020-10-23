@@ -21,12 +21,12 @@ def extract_author(page: BeautifulSoup) -> str:
 
 def extract_chapter_names(page: BeautifulSoup) -> Optional[List[str]]:
     chapters = []
-    data = page.find(id='chap_select').children
+    data = page.find(id='chap_select')
     if data is None:
         # story has only 1 chapter
         return None
 
-    for chapter in data:
+    for chapter in data.children:
         _, title = chapter.string.split('. ', maxsplit=1)
         chapters.append(title)
 
