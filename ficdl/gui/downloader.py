@@ -98,13 +98,11 @@ class Downloader(tk.Frame):
         path = self.output_path.get().strip()
         cover = self.cover_path.get().strip()
 
-        self.download_button.configure(state=tk.DISABLED)
-
         if url == '' or path == '':
             messagebox.showerror(title='Error', message='You must specify both a URL and a save path.')
             return
 
-        if not os.path.exists(cover):
+        if cover != '' and not os.path.exists(cover):
             messagebox.showerror(title='Cover does not exist', message='The path you gave for the cover does not exist.')
             return
 
@@ -113,6 +111,8 @@ class Downloader(tk.Frame):
         if suffix.casefold() != '.epub'.casefold():
             messagebox.showerror(title='Unsupported format', message='Only ePub books are supported at the moment.')
             return
+
+        self.download_button.configure(state=tk.DISABLED)
 
         thread = threading.Thread(target=on_download_inner, args=(url, cover, path, self.download_button, self.download_callback, self.progress_value))
         thread.start()
