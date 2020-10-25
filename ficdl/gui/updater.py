@@ -5,15 +5,13 @@ import webbrowser
 from tkinter.scrolledtext import ScrolledText
 
 from ficdl import __version__, __version_info__
-from ficdl.updater import get_latest_release
 
 class Updater(tk.Toplevel):
-    def __init__(self, master):
+    def __init__(self, master, release):
         super().__init__(master)
-        self.create_widgets()
+        self.create_widgets(release)
 
-    def create_widgets(self):
-        release = get_latest_release()
+    def create_widgets(self, release):
         if release.version > __version_info__:
             self.title('An update is available')
             
