@@ -22,11 +22,11 @@ Run `python ficdl.pyz --help` for more options.
 
 ## Installation
 
-Clone this repository, or download as a zip file. I'll have something on the releases tab eventually.
+Download `ficdl.pyz` from the releases section.
 
 ### Dependencies
 
-* Python 3.9+ (might work on earlier 3.x versions)
+* Python 3.9+
 
 ## Supported services
 
