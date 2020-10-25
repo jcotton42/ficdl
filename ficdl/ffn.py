@@ -33,16 +33,13 @@ def extract_chapter_names(page: BeautifulSoup) -> Optional[List[str]]:
     return chapters
 
 def extract_cover_url(page: BeautifulSoup) -> str:
-    # stories with no cover still have the hidden big cover (it's just the generic profile image)
-    # a story with an actual cover will have two elements with the cimage class
-    has_cover = len(page.select('.cimage')) != 1
-    if not has_cover:
+    cover = page.select_one('.cimage[data-original]')
+    if cover is None:
         return None
     
-    img = page.select('#img_large img')[0]
-    url = img['src']
+    url = cover['data-original']
     if url.startswith('//'):
-        url = 'https://www.fanfiction.net/' + url.lstrip('/')
+        url = 'https:' + url
     return url
 
 def extract_text(page: BeautifulSoup) -> List:
