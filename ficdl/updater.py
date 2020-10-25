@@ -2,7 +2,13 @@ from urllib.request import Request, urlopen
 
 import json
 
-def get_latest_version_and_uri() -> tuple[tuple[int, int, int], str]:
+class ReleaseInfo:
+    def __init__(self, version, download_url, release_notes):
+        self.version = version
+        self.download_url = download_url
+        self.release_notes = release_notes
+
+def get_latest_release() -> ReleaseInfo:
     request = Request(
         'https://api.github.com/repos/jcotton42/ficdl/releases/latest',
         headers={'Accpet': 'application/vnd.github.v3+json'}
@@ -11,7 +17,8 @@ def get_latest_version_and_uri() -> tuple[tuple[int, int, int], str]:
     with urlopen(request) as respone:
         release = json.loads(respone.read())
 
-    return (
+    return ReleaseInfo(
         tuple(map(int, release['tag_name'].lstrip('v').split('.'))),
         release['html_url'],
+        release['body'],
     )
