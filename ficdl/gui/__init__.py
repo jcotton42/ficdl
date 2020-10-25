@@ -1,12 +1,14 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import Label, messagebox
 import tkinter.messagebox as messagebox
 import tkinter.ttk as ttk
 
 from .converter import Converter
 from .downloader import Downloader
 from .subscription_manager import SubscriptionManager
-from ficdl import __version__
+from .updater import Updater
+from ficdl import __version__, __version_info__
+from ficdl.updater import get_latest_release
 
 class Gui(tk.Tk):
     def __init__(self):
@@ -14,6 +16,10 @@ class Gui(tk.Tk):
         self.title('ficdl')
         self.create_menu()
         self.create_widgets()
+
+        release = get_latest_release()
+        if release.version > __version_info__:
+            self.show_updater(release)
 
     def create_menu(self):
         menubar = tk.Menu(self, tearoff=False)
@@ -23,6 +29,7 @@ class Gui(tk.Tk):
         menubar.add_cascade(label='File', menu=file_menu)
 
         help_menu = tk.Menu(menubar, tearoff=False)
+        help_menu.add_command(label='Check for updates', command=lambda: self.show_updater(get_latest_release()))
         help_menu.add_command(label='About', command=self.show_about)
         menubar.add_cascade(label='Help', menu=help_menu)
 
@@ -43,6 +50,11 @@ class Gui(tk.Tk):
 
     def show_about(self):
         messagebox.showinfo('About ficdl', f'ficdl version {__version__}\nMade by jcotton42')
+
+    def show_updater(self, release):
+        updater = Updater(self, release)
+        updater.focus_set()
+        self.wait_window(updater)
 
 def gui_main():
     Gui().mainloop()
