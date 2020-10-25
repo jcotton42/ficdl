@@ -1,11 +1,12 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import Label, messagebox
 import tkinter.messagebox as messagebox
 import tkinter.ttk as ttk
 
 from .converter import Converter
 from .downloader import Downloader
 from .subscription_manager import SubscriptionManager
+from .updater import Updater
 from ficdl import __version__
 
 class Gui(tk.Tk):
@@ -23,6 +24,7 @@ class Gui(tk.Tk):
         menubar.add_cascade(label='File', menu=file_menu)
 
         help_menu = tk.Menu(menubar, tearoff=False)
+        help_menu.add_command(label='Check for updates', command=self.show_updater)
         help_menu.add_command(label='About', command=self.show_about)
         menubar.add_cascade(label='Help', menu=help_menu)
 
@@ -43,6 +45,11 @@ class Gui(tk.Tk):
 
     def show_about(self):
         messagebox.showinfo('About ficdl', f'ficdl version {__version__}\nMade by jcotton42')
+
+    def show_updater(self):
+        updater = Updater(self)
+        updater.focus_set()
+        self.wait_window(updater)
 
 def gui_main():
     Gui().mainloop()
