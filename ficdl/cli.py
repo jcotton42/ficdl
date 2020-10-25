@@ -22,4 +22,4 @@ def cli_main(args):
         print(release.download_url)
         print("*******")
 
-    download_story(args.url, None, args.output, callback)
+    download_story(args.url, args.cover, args.output, callback)
