@@ -102,7 +102,9 @@ class Downloader(tk.Frame):
             messagebox.showerror(title='Error', message='You must specify both a URL and a save path.')
             return
 
-        if cover != '' and not os.path.exists(cover):
+        if cover == '':
+            cover = None
+        elif not os.path.exists(cover):
             messagebox.showerror(title='Cover does not exist', message='The path you gave for the cover does not exist.')
             return
 
