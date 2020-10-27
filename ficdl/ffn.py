@@ -1,13 +1,16 @@
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from datetime import datetime
 from random import uniform
 from time import sleep
-from typing import Iterator, List, Optional
+from typing import Optional
 
 from .callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
 from .utils import download_and_decompress, StoryData
 
 import logging
+import re
+
+CENTER_STYLE = re.compile(r'text-align\s*:\s*center', re.IGNORECASE)
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +22,7 @@ def extract_author(page: BeautifulSoup) -> str:
     # no better way for this either
     return page.select('#profile_top > a')[0].string
 
-def extract_chapter_names(page: BeautifulSoup) -> Optional[List[str]]:
+def extract_chapter_names(page: BeautifulSoup) -> Optional[list[str]]:
     chapters = []
     data = page.find(id='chap_select')
     if data is None:
@@ -42,10 +45,17 @@ def extract_cover_url(page: BeautifulSoup) -> str:
         url = 'https:' + url
     return url
 
-def extract_text(page: BeautifulSoup) -> List:
-    # need to use list() here, otherwise a significant amount of text will not make it to the ebook
-    # no idea why
-    return list(page.find(id='storytext').children)
+def extract_text(page: BeautifulSoup) -> list:
+    text = []
+    for child in page.find(id='storytext').children:
+        if isinstance(child, Tag) and child.has_attr('style') and CENTER_STYLE.match(child['style']):
+            # pandoc throws away the centering CSS on parsing, so add a div with a custom CSS class
+            div = page.new_tag('div')
+            div['class'] = 'center'
+            child = child.wrap(div)
+        text.append(child)
+
+    return text
 
 def extract_description(page: BeautifulSoup) -> str:
     return page.select_one('#profile_top > div').string
