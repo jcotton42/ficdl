@@ -26,6 +26,8 @@ def parse_args():
     parser.add_argument('-v', '--verbose', action='store_true', help='Output information about chapter scraping, etc.')
     parser.add_argument('-V', '--version', action='store_true', help='Prints version information and exits.')
 
+    parser.add_argument('--dump-html', help='Debug option for dumping the generated HTML document.')
+
     return parser.parse_args()
 
 def main():

@@ -6,9 +6,11 @@ from xml.sax.saxutils import escape
 import logging
 import os
 import os.path
-import pypandoc
+import pkgutil
 import re
 import tempfile
+
+import pypandoc
 
 from . import ffn
 from .callbacks import ProgressCallback
@@ -47,10 +49,14 @@ invalid_names = [
     'lpt9'
 ]
 
-def download_story(url: str, cover_path: Optional[str], output_path: str, callback: ProgressCallback):
+def download_story(url: str, cover_path: Optional[str], output_path: str, dump_html_to: Optional[str], callback: ProgressCallback):
     story = ffn.download_story(url, callback)
 
     html = make_output_html(zip(story.chapter_names, story.chapter_text))
+
+    if dump_html_to is not None:
+        with open(dump_html_to, 'w') as f:
+            f.write(html)
 
     with tempfile.TemporaryDirectory() as work_dir:
         if cover_path is None and story.cover_url is not None:
@@ -85,7 +91,12 @@ def create_epub(html: str, metadata: StoryData, output_path: str, cover_path: Op
     with open(meta_file, 'w') as f:
         f.write(epub_metadata)
 
-    extra_args = [f'--epub-metadata={meta_file}', '--toc']
+    css = pkgutil.get_data('ficdl', 'assets/styles.css')
+    css_file = os.path.join(work_dir, 'styles.css')
+    with open(css_file, 'wb') as f:
+        f.write(css)
+
+    extra_args = [f'--epub-metadata={meta_file}', f'--css={css_file}', '--toc']
     if cover_path:
         extra_args.append(f'--epub-cover-image={cover_path}')
     pypandoc.convert_text(
