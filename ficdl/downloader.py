@@ -6,9 +6,11 @@ from xml.sax.saxutils import escape
 import logging
 import os
 import os.path
-import pypandoc
+import pkgutil
 import re
 import tempfile
+
+import pypandoc
 
 from . import ffn
 from .callbacks import ProgressCallback
@@ -89,7 +91,12 @@ def create_epub(html: str, metadata: StoryData, output_path: str, cover_path: Op
     with open(meta_file, 'w') as f:
         f.write(epub_metadata)
 
-    extra_args = [f'--epub-metadata={meta_file}', '--toc']
+    css = pkgutil.get_data('ficdl', 'assets/styles.css')
+    css_file = os.path.join(work_dir, 'styles.css')
+    with open(css_file, 'wb') as f:
+        f.write(css)
+
+    extra_args = [f'--epub-metadata={meta_file}', f'--css={css_file}', '--toc']
     if cover_path:
         extra_args.append(f'--epub-cover-image={cover_path}')
     pypandoc.convert_text(
