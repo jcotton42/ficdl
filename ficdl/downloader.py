@@ -47,10 +47,14 @@ invalid_names = [
     'lpt9'
 ]
 
-def download_story(url: str, cover_path: Optional[str], output_path: str, callback: ProgressCallback):
+def download_story(url: str, cover_path: Optional[str], output_path: str, dump_html_to: Optional[str], callback: ProgressCallback):
     story = ffn.download_story(url, callback)
 
     html = make_output_html(zip(story.chapter_names, story.chapter_text))
+
+    if dump_html_to is not None:
+        with open(dump_html_to, 'w') as f:
+            f.write(html)
 
     with tempfile.TemporaryDirectory() as work_dir:
         if cover_path is None and story.cover_url is not None:

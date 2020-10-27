@@ -89,7 +89,7 @@ class Downloader(tk.Frame):
 
     def on_download(self):
         def on_download_inner(url, cover, path, download_button, callback, progress_value):
-            download_story(url, cover, path, callback)
+            download_story(url, cover, path, None, callback)
             download_button.configure(state=tk.NORMAL)
             messagebox.showinfo(title='Download finished', message='All done.')
             progress_value.set(0)
