@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.0
+
+### New features
+
+Added `--dump-html` to the CLI to dump the generated HTML for debugging purposes.
+
 ## v1.6.1
 
 GUI no longer errors when not given a cover path.
