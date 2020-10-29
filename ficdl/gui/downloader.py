@@ -1,7 +1,7 @@
-import re
 from typing import Union
 
 import os.path
+import queue
 import threading
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -11,10 +11,20 @@ import tkinter.messagebox as messagebox
 from ..callbacks import ChapterDetails, InitialStoryDetails
 from ..downloader import download_story
 
+DOWNLOAD_STATE_CHANGED = '<<DownloadStateChanged>>'
+
+class DownloadFinished:
+    path: str
+
+    def __init__(self, path):
+        self.path = path
+
 class Downloader(tk.Frame):
     def __init__(self, master, window):
         super().__init__(master)
         self.window = window
+        self.download_data = queue.SimpleQueue()
+        self.bind(DOWNLOAD_STATE_CHANGED, self.on_download_state_changed)
         self.create_widgets()
 
     def create_widgets(self):
@@ -80,19 +90,29 @@ class Downloader(tk.Frame):
         self.cover_path.set(file)
 
     def download_callback(self, details: Union[ChapterDetails, InitialStoryDetails]):
-        if isinstance(details, InitialStoryDetails):
-            self.progress_value.set((1 / details.chapter_count) * 100)
-        elif isinstance(details, ChapterDetails):
-            self.progress_value.set((details.chatper_number / details.chapter_count) * 100)
-        else:
-            raise Exception("jcotton42 forgot to update all the callback stuff")
+        # not run on the UI thread, so use events
+        self.download_data.put(details)
+        self.event_generate(DOWNLOAD_STATE_CHANGED)
+
+    def on_download_state_changed(self, _event):
+        while not self.download_data.empty():
+            details = self.download_data.get()
+            if isinstance(details, InitialStoryDetails):
+                self.progress_value.set((1 / details.chapter_count) * 100)
+            elif isinstance(details, ChapterDetails):
+                self.progress_value.set((details.chatper_number / details.chapter_count) * 100)
+            elif isinstance(details, DownloadFinished):
+                self.download_button.configure(state=tk.NORMAL)
+                self.progress_value.set(0)
+                messagebox.showinfo(title='Download finished', message='All done.')
+            else:
+                raise Exception("A callback case isn't being handled in the GUI: " + type(details))
 
     def on_download(self):
-        def on_download_inner(url, cover, path, download_button, callback, progress_value):
-            download_story(url, cover, path, None, callback)
-            download_button.configure(state=tk.NORMAL)
-            messagebox.showinfo(title='Download finished', message='All done.')
-            progress_value.set(0)
+        def on_download_inner(url, cover, path):
+            download_story(url, cover, path, None, self.download_callback)
+            self.download_data.put(DownloadFinished(path))
+            self.event_generate(DOWNLOAD_STATE_CHANGED)
 
         url = self.url.get().strip()
         path = self.output_path.get().strip()
@@ -116,5 +136,5 @@ class Downloader(tk.Frame):
 
         self.download_button.configure(state=tk.DISABLED)
 
-        thread = threading.Thread(target=on_download_inner, args=(url, cover, path, self.download_button, self.download_callback, self.progress_value))
+        thread = threading.Thread(target=on_download_inner, args=(url, cover, path))
         thread.start()
