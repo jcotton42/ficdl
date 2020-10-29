@@ -1,20 +1,30 @@
 from datetime import datetime
 from gzip import GzipFile
 from io import BytesIO
-from typing import Iterable, Iterator, List
+from typing import Iterable, TypeVar
 from urllib.request import urlopen
 
 import logging
+import re
 import sys
 
 logger = logging.getLogger(__name__)
+
+INVALID_PATH_CHARS = re.compile(r'[<>:"/\\|?*]')
+INVALID_PATH = re.compile(r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])$', re.IGNORECASE)
+
+def make_path_safe(stem: str) -> str:
+    if INVALID_PATH.match(stem):
+        return stem + '_'
+    else:
+        return INVALID_PATH_CHARS.sub('_', stem)
 
 class StoryData:
     title: str
     author: str
     cover_url: str
     chapter_names: Iterable[str]
-    chapter_text: Iterable[List]
+    chapter_text: Iterable[list]
     description: str
     date_utc: datetime
 
