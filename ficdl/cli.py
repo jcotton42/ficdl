@@ -1,6 +1,11 @@
 from typing import Union
 
+import os
+import os.path
+import tempfile
+
 from ficdl import __version__, __version_info__
+from ficdl.utils import make_path_safe
 from .callbacks import InitialStoryDetails, ChapterDetails
 from .downloader import download_story
 from .updater import get_latest_release
@@ -22,4 +27,11 @@ def cli_main(args):
         print(release.download_url)
         print("*******")
 
-    download_story(args.url, args.cover, args.output, args.dump_html, callback)
+    if args.output is not None:
+        download_story(args.url, args.cover, args.output, args.dump_html, callback)
+    else:
+        with tempfile.TemporaryDirectory() as work_dir:
+            temp_path = os.path.join(work_dir, 'story.epub')
+            story = download_story(args.url, args.cover, temp_path, args.dump_html, callback)
+            name = make_path_safe(story.title)
+            os.replace(temp_path, name + ".epub")
