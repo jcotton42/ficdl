@@ -13,7 +13,7 @@ from ficdl.updater import get_latest_release
 class Gui(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title('ficdl')
+        self.title(f'ficdl v{__version__}')
         self.create_menu()
         self.create_widgets()
 
