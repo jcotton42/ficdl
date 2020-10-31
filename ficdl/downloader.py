@@ -1,3 +1,4 @@
+from ast import Str
 from ficdl.utils import download_and_decompress, StoryData
 from bs4 import BeautifulSoup
 from typing import Iterable, List, Optional, Tuple
@@ -7,7 +8,6 @@ import logging
 import os
 import os.path
 import pkgutil
-import re
 import tempfile
 
 import pypandoc
@@ -23,33 +23,7 @@ html_template = '''<!DOCTYPE html>
 </body>
 </html>'''
 
-invalid_path_chars = re.compile(r'[<>:"/\\|?*]')
-invalid_names = [
-    'con',
-    'prn',
-    'aux',
-    'nul',
-    'com1',
-    'com2',
-    'com3',
-    'com4',
-    'com5',
-    'com6',
-    'com7',
-    'com8',
-    'com9',
-    'lpt1',
-    'lpt2',
-    'lpt3',
-    'lpt4',
-    'lpt5',
-    'lpt6',
-    'lpt7',
-    'lpt8',
-    'lpt9'
-]
-
-def download_story(url: str, cover_path: Optional[str], output_path: str, dump_html_to: Optional[str], callback: ProgressCallback):
+def download_story(url: str, cover_path: Optional[str], output_path: str, dump_html_to: Optional[str], callback: ProgressCallback) -> StoryData:
     story = ffn.download_story(url, callback)
 
     html = make_output_html(zip(story.chapter_names, story.chapter_text))
@@ -65,6 +39,8 @@ def download_story(url: str, cover_path: Optional[str], output_path: str, dump_h
                 f.write(download_and_decompress(story.cover_url))
 
         create_epub(html, story, output_path, cover_path, work_dir)
+
+    return story
 
 def make_output_html(chapters: Iterable[Tuple[str, List]]) -> str:
     output = BeautifulSoup(html_template, 'html5lib')

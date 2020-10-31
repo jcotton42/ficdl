@@ -24,7 +24,7 @@ def parse_args():
         help='Path to a cover for the eBook. For best results use a PNG or JPG smaller than 1,000x1,000px.'
     )
     parser.add_argument('-v', '--verbose', action='store_true', help='Output information about chapter scraping, etc.')
-    parser.add_argument('-V', '--version', action='store_true', help='Prints version information and exits.')
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s {}'.format(__version__))
 
     parser.add_argument('--dump-html', help='Debug option for dumping the generated HTML document.')
 
@@ -32,9 +32,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-    if args.version:
-        print(f'ficdl v{__version__}')
-        sys.exit(0)
 
     try:
         pypandoc.ensure_pandoc_installed(delete_installer=True)

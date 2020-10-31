@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.0
+
+### New features
+
+The downloader GUI will now suggest naming the story file after the story's title.
+
 ## v1.7.0
 
 ### New features

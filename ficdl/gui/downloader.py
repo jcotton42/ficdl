@@ -1,26 +1,42 @@
-import re
 from typing import Union
 
+import os
 import os.path
+import queue
+import tempfile
 import threading
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
 
+from ficdl.utils import make_path_safe
 from ..callbacks import ChapterDetails, InitialStoryDetails
 from ..downloader import download_story
+
+DOWNLOAD_STATE_CHANGED = '<<DownloadStateChanged>>'
+
+class DownloadFinished:
+    work_dir: tempfile.TemporaryDirectory
+    story_path: str
+    story_title: str
+
+    def __init__(self, work_dir, story_path, story_title):
+        self.work_dir = work_dir
+        self.story_path = story_path
+        self.story_title = story_title
 
 class Downloader(tk.Frame):
     def __init__(self, master, window):
         super().__init__(master)
         self.window = window
+        self.download_data = queue.SimpleQueue()
+        self.bind(DOWNLOAD_STATE_CHANGED, self.on_download_state_changed)
         self.create_widgets()
 
     def create_widgets(self):
         self.url = tk.StringVar()
         self.cover_path = tk.StringVar()
-        self.output_path = tk.StringVar()
         self.progress_value = tk.IntVar()
 
         row = 0
@@ -36,33 +52,9 @@ class Downloader(tk.Frame):
         ttk.Button(self, text='Browse...', command=self.on_browse_for_cover).grid(row=row, column=2, sticky=tk.W)
 
         row += 1
-        ttk.Label(self, text='Download to: ').grid(row=row, column=0, sticky=tk.W)
-        ttk.Entry(self, textvariable=self.output_path).grid(row=row, column=1, sticky=tk.W)
-        ttk.Button(self, text='Browse...', command=self.on_browse_for_output).grid(row=row, column=2, sticky=tk.W)
-
-        row += 1
-        self.download_button = ttk.Button(self, text='Download', command=self.on_download)
-        self.download_button.grid(row=row, column=0, sticky=tk.W)
-
-        row += 1
-        ttk.Progressbar(self, orient='horizontal', mode='determinate', variable=self.progress_value).grid(row=row, column=0, columnspan=3, sticky=tk.W)
-
-    def on_browse_for_output(self):
-        file = filedialog.asksaveasfilename(
-            parent=self.window,
-            defaultextension='.epub',
-            filetypes=(
-                ('ePub (all eReaders *except* Kindle', '*.epub'),
-                ('MOBI (all Kindles)', '*.mobi'),
-                ('KFX (post-2015 Kindle models)', '*.kfx'),
-            )
-        )
-        
-        if file == '':
-            # Cancel was clicked
-            return
-        
-        self.output_path.set(file)
+        ttk.Progressbar(self, orient='horizontal', mode='determinate', variable=self.progress_value).grid(row=row, column=0, columnspan=2, sticky=tk.W)
+        self.download_button = ttk.Button(self, text='Download...', command=self.on_download)
+        self.download_button.grid(row=row, column=2, sticky=tk.W)
 
     def on_browse_for_cover(self):
         file = filedialog.askopenfilename(
@@ -80,27 +72,58 @@ class Downloader(tk.Frame):
         self.cover_path.set(file)
 
     def download_callback(self, details: Union[ChapterDetails, InitialStoryDetails]):
-        if isinstance(details, InitialStoryDetails):
-            self.progress_value.set((1 / details.chapter_count) * 100)
-        elif isinstance(details, ChapterDetails):
-            self.progress_value.set((details.chatper_number / details.chapter_count) * 100)
-        else:
-            raise Exception("jcotton42 forgot to update all the callback stuff")
+        # not run on the UI thread, so use events
+        self.download_data.put(details)
+        self.event_generate(DOWNLOAD_STATE_CHANGED)
+
+    def ask_for_save_location(self, suggest_name):
+        file = filedialog.asksaveasfilename(
+            parent=self.window,
+            defaultextension='.epub',
+            initialfile=suggest_name,
+            filetypes=(
+                ('ePub (all eReaders *except* Kindle', '*.epub'),
+            )
+        )
+        
+        if file == '':
+            # Cancel was clicked
+            return None
+        
+        return file
+
+    def on_download_state_changed(self, _event):
+        while not self.download_data.empty():
+            data = self.download_data.get()
+            if isinstance(data, InitialStoryDetails):
+                self.progress_value.set((1 / data.chapter_count) * 100)
+            elif isinstance(data, ChapterDetails):
+                self.progress_value.set((data.chatper_number / data.chapter_count) * 100)
+            elif isinstance(data, DownloadFinished):
+                suggest_name = make_path_safe(data.story_title)
+                save_path = self.ask_for_save_location(suggest_name)
+                if save_path is not None:
+                    try:
+                        os.replace(data.story_path, save_path)
+                    finally:
+                        data.work_dir.cleanup()
+                else:
+                    data.work_dir.cleanup()
+
+                self.download_button.configure(state=tk.NORMAL)
+                self.progress_value.set(0)
+            else:
+                raise Exception("A callback case isn't being handled in the GUI: " + type(data))
 
     def on_download(self):
-        def on_download_inner(url, cover, path, download_button, callback, progress_value):
-            download_story(url, cover, path, None, callback)
-            download_button.configure(state=tk.NORMAL)
-            messagebox.showinfo(title='Download finished', message='All done.')
-            progress_value.set(0)
+        def on_download_inner(url, cover, work_dir):
+            story_path = os.path.join(work_dir.name, 'story.epub')
+            story_data = download_story(url, cover, story_path, None, self.download_callback)
+            self.download_data.put(DownloadFinished(work_dir, story_path, story_data.title))
+            self.event_generate(DOWNLOAD_STATE_CHANGED)
 
         url = self.url.get().strip()
-        path = self.output_path.get().strip()
         cover = self.cover_path.get().strip()
-
-        if url == '' or path == '':
-            messagebox.showerror(title='Error', message='You must specify both a URL and a save path.')
-            return
 
         if cover == '':
             cover = None
@@ -108,13 +131,9 @@ class Downloader(tk.Frame):
             messagebox.showerror(title='Cover does not exist', message='The path you gave for the cover does not exist.')
             return
 
-        _, suffix = os.path.splitext(path)
-
-        if suffix.casefold() != '.epub'.casefold():
-            messagebox.showerror(title='Unsupported format', message='Only ePub books are supported at the moment.')
-            return
-
         self.download_button.configure(state=tk.DISABLED)
 
-        thread = threading.Thread(target=on_download_inner, args=(url, cover, path, self.download_button, self.download_callback, self.progress_value))
+        work_dir = tempfile.TemporaryDirectory()
+
+        thread = threading.Thread(target=on_download_inner, args=(url, cover, work_dir))
         thread.start()
