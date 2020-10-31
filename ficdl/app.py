@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import ficdl.updater as updater
+
 import argparse
 import logging
 import pypandoc
@@ -12,26 +14,30 @@ from .gui import gui_main
 COULD_NOT_INSTALL_PANDOC = 1
 
 def parse_args():
-    parser = argparse.ArgumentParser('ficdl', description='A fan fiction downloader.')
-    parser.add_argument('url', nargs='?', default=None, help='The URL to the story to download')
+    parser = argparse.ArgumentParser('ficdl', description='A fan fiction downloader')
+    parser.add_argument('url', nargs='?', default=None, help='the URL to the story to download')
     parser.add_argument(
         '-o', '--output',
         metavar='FILE',
-        help='What file to output the story to. Attempts to automatically determine if not specified.'
+        help='what file to output the story to. Attempts to automatically determine if not specified'
     )
     parser.add_argument(
         '-c', '--cover',
-        help='Path to a cover for the eBook. For best results use a PNG or JPG smaller than 1,000x1,000px.'
+        help='path to a cover for the eBook. For best results use a PNG or JPG smaller than 1,000x1,000px'
     )
-    parser.add_argument('-v', '--verbose', action='store_true', help='Output information about chapter scraping, etc.')
+    parser.add_argument('-v', '--verbose', action='store_true', help='output information about chapter scraping, etc.')
     parser.add_argument('-V', '--version', action='version', version='%(prog)s {}'.format(__version__))
+    parser.add_argument('--update', action='store_true', help='installs the latest version of ficdl')
 
-    parser.add_argument('--dump-html', help='Debug option for dumping the generated HTML document.')
+    parser.add_argument('--dump-html', help='debug option for dumping the generated HTML document')
 
     return parser.parse_args()
 
 def main():
     args = parse_args()
+
+    if args.update:
+        updater.install_update(updater.get_latest_release().download_url, False)
 
     try:
         pypandoc.ensure_pandoc_installed(delete_installer=True)
