@@ -4,6 +4,8 @@
 
 ### New features
 
+ficdl can now download its own updates.
+
 The downloader GUI will now suggest naming the story file after the story's title.
 
 The CLI will infer the filename of the eBook from the title as well if not given.
