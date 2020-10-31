@@ -32,11 +32,27 @@ def get_latest_release() -> ReleaseInfo:
     )
 
 def install_update(download_url: str, restart_app: bool) -> NoReturn:
-    updater = Path(tempfile.mkdtemp()).joinpath('updater.py')
+    work_dir = Path(tempfile.mkdtemp())
+
+    updater = work_dir.joinpath('updater.py')
     updater.write_bytes(pkgutil.get_data('ficdl', 'assets/updater.py'))
 
-    ficdl_path = Path(ficdl.__file__).parent.parent.resolve()
-    python_args = [str(updater), download_url, ficdl_path]
+    current_ficdl_path = Path(ficdl.__file__).parent.parent.resolve()
+    updated_ficdl_path = work_dir.joinpath('ficdl.pyz')
+
+    request = Request(download_url, headers={
+        'accept': 'application/octet-stream',
+    })
+
+    with urlopen(request) as response:
+        updated_ficdl_path.write_bytes(response.read())
+
+    python_args = [
+        str(updater),
+        str(updated_ficdl_path),
+        str(current_ficdl_path),
+        str(work_dir)
+    ]
     if restart_app:
         python_args.append('--restart-app')
 

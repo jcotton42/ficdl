@@ -7,7 +7,7 @@ import logging
 import pypandoc
 import sys
 
-from ficdl import __version__
+from ficdl import __version__, __version_info__
 from .cli import cli_main
 from .gui import gui_main
 
@@ -37,7 +37,12 @@ def main():
     args = parse_args()
 
     if args.update:
-        updater.install_update(updater.get_latest_release().download_url, False)
+        release = updater.get_latest_release()
+        if release.version > __version_info__:
+            updater.install_update(release.download_url, False)
+        else:
+            print("ficdl is up to date")
+            sys.exit(0)
 
     try:
         pypandoc.ensure_pandoc_installed(delete_installer=True)
