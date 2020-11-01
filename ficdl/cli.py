@@ -1,13 +1,12 @@
 from typing import Union
 
-import os
-import os.path
+from pathlib import Path
 import tempfile
 
 from ficdl import __version__, __version_info__
 from ficdl.utils import make_path_safe
 from .callbacks import InitialStoryDetails, ChapterDetails
-from .downloader import download_story
+from .downloader import DownloadOptions, download_story, OutputFormat
 from .updater import get_latest_release
 
 def callback(details: Union[InitialStoryDetails, ChapterDetails]):
@@ -27,11 +26,20 @@ def cli_main(args):
         print(release.download_url)
         print("*******")
 
+    options = DownloadOptions(
+        url=args.url,
+        format=args.format,
+        output_path=args.output,
+        callback=callback,
+        cover_path=args.cover,
+        dump_html_to=args.dump_html_to
+    )
     if args.output is not None:
-        download_story(args.url, args.cover, args.output, args.dump_html, callback)
+        download_story(options)
     else:
         with tempfile.TemporaryDirectory() as work_dir:
-            temp_path = os.path.join(work_dir, 'story.epub')
-            story = download_story(args.url, args.cover, temp_path, args.dump_html, callback)
-            name = make_path_safe(story.title)
-            os.replace(temp_path, name + ".epub")
+            temp_path = Path(work_dir).joinpath('story.epub')
+            options.output_path = temp_path
+            story = download_story(options)
+            dest = Path(make_path_safe(story.title) + '.' + options.format.value)
+            temp_path.replace(dest)
