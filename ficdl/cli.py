@@ -11,8 +11,13 @@ from .updater import get_latest_release
 
 def callback(details: Union[InitialStoryDetails, ChapterDetails]):
     if isinstance(details, InitialStoryDetails):
-        print(f'Downloading "{details.title}" by {details.author}, with {details.chapter_count} chapters')
-        print(f'Downloaded chapter 1: {details.first_chapter_title}')
+        title = details.metadata.title
+        author = details.metadata.author
+        chapter_count = len(details.metadata.chapter_names)
+        # None means the local time zone
+        date = details.metadata.update_date_utc.astimezone(None)
+        print(f'Downloading "{title}" by {author}, with {chapter_count} chapters')
+        print(f'Last updated {date:%Y-%m-%d}')
     elif isinstance(details, ChapterDetails):
         print(f'Downloaded chapter {details.chatper_number}: {details.chapter_title}')
     else:

@@ -1,11 +1,9 @@
 from bs4 import BeautifulSoup, Tag
-from datetime import datetime
-from random import uniform
-from time import sleep
+from datetime import datetime, timezone
 from typing import Optional
 
-from .callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
-from .utils import download_and_decompress, StoryData
+from ficdl.scrapers.types import Scraper, StoryMetadata
+from ficdl.utils import download_and_decompress
 
 import logging
 import re
@@ -60,38 +58,48 @@ def extract_text(page: BeautifulSoup) -> list:
 def extract_description(page: BeautifulSoup) -> str:
     return page.select_one('#profile_top > div').string
 
-def extract_date(page: BeautifulSoup) -> datetime:
+def extract_update_date_utc(page: BeautifulSoup) -> datetime:
     # update date is either by itself, or the first date
-    return datetime.fromtimestamp(int(page.select('#profile_top span[data-xutime]')[0]['data-xutime']))
+    return datetime.fromtimestamp(int(page.select('#profile_top span[data-xutime]')[0]['data-xutime']), timezone.utc)
 
-def download_story(url: str, callback: ProgressCallback) -> StoryData:
-    prefix, _chap_num, title_from_url = url.rsplit('/', maxsplit=2)
+class FFNScraper(Scraper):
+    base_url: str
+    title_from_url: str
+    first_chapter: BeautifulSoup
 
-    url = f'{prefix}/1/{title_from_url}'
+    def __init__(self, url: str) -> None:
+        self.base_url, _chap_num, self.title_from_url = url.rsplit('/', maxsplit=2)
 
-    first_chapter = BeautifulSoup(download_and_decompress(url), 'html5lib')
-    
-    title = extract_story_title(first_chapter)
-    author = extract_author(first_chapter)
-    cover_url = extract_cover_url(first_chapter)
-    chapter_names = extract_chapter_names(first_chapter)
-    chapter_text = [extract_text(first_chapter)]
-    description = extract_description(first_chapter)
-    date = extract_date(first_chapter)
+    def get_metadata(self) -> StoryMetadata:
+        url = f'{self.base_url}/1/{self.title_from_url}'
 
-    if chapter_names is None:
-        chapter_names = [title]
-    
-    callback(InitialStoryDetails(title, author, chapter_names[0], len(chapter_names)))
+        if getattr(self, 'first_chapter', None) is None:
+            self.first_chapter = BeautifulSoup(download_and_decompress(url), 'html5lib')
 
-    if len(chapter_names) > 1:
-        for i in range(2, len(chapter_names) + 1):
-            # rate-limiting, to be polite
-            sleep(uniform(0.500, 1.250))
-            url = f'{prefix}/{i}/{title_from_url}'
+        title = extract_story_title(self.first_chapter)
+        author = extract_story_title(self.first_chapter)
+        cover_url = extract_cover_url(self.first_chapter)
+        chapter_names = extract_chapter_names(self.first_chapter)
+        description = extract_description(self.first_chapter)
+        update_date_utc = extract_update_date_utc(self.first_chapter)
+
+        if chapter_names is None:
+            chapter_names = [title]
+
+        return StoryMetadata(
+            title=title,
+            author=author,
+            cover_url=cover_url,
+            chapter_names=chapter_names,
+            description=description,
+            update_date_utc=update_date_utc
+        )
+
+    def get_text_for_chapter(self, number: int) -> list:
+        if number == 1 and self.first_chapter is not None:
+            chapter = self.first_chapter
+        else:
+            url = f'{self.base_url}/{number}/{self.title_from_url}'
             chapter = BeautifulSoup(download_and_decompress(url), 'html5lib')
-            chapter_text.append(extract_text(chapter))
-            
-            callback(ChapterDetails(chapter_names[i - 1], i, len(chapter_names)))
-    
-    return StoryData(title, author, cover_url, chapter_names, chapter_text, description, date)
+
+        return extract_text(chapter)

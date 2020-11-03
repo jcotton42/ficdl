@@ -1,19 +1,21 @@
-from bs4 import BeautifulSoup
-from pathlib import Path
-from typing import Iterable, List, Optional, Tuple
-from xml.sax.saxutils import escape
-
 import dataclasses
 import enum
 import logging
+from pathlib import Path
 import pkgutil
+from random import uniform
 import tempfile
+from time import sleep
+from typing import Iterable, List, Optional, Tuple
+from xml.sax.saxutils import escape
 
+from bs4 import BeautifulSoup
 import pypandoc
 
-from ficdl.utils import download_and_decompress, StoryData
-from . import ffn
-from .callbacks import ProgressCallback
+from ficdl.callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
+from ficdl.scrapers import get_scraper
+from ficdl.scrapers.types import Scraper, StoryMetadata
+from ficdl.utils import download_and_decompress
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +39,17 @@ class DownloadOptions:
     cover_path: Optional[Path]
     dump_html_to: Optional[Path]
 
-def download_story(options: DownloadOptions) -> StoryData:
+def download_story(options: DownloadOptions) -> StoryMetadata:
     url = options.url
     callback = options.callback
-    story = ffn.download_story(url, callback)
 
-    html = make_output_html(zip(story.chapter_names, story.chapter_text))
+    scraper = get_scraper(url)
+    metadata = scraper.get_metadata()
+    callback(InitialStoryDetails(metadata))
+
+    chapters = get_chapters(scraper, metadata.chapter_names, callback)
+
+    html = make_output_html(zip(metadata.chapter_names, chapters))
 
     if options.dump_html_to is not None:
         with open(options.dump_html_to, 'w') as f:
@@ -51,17 +58,32 @@ def download_story(options: DownloadOptions) -> StoryData:
     with tempfile.TemporaryDirectory() as work_dir:
         work_dir = Path(work_dir)
         cover_path = options.cover_path
-        if cover_path is None and story.cover_url is not None:
+        if cover_path is None and metadata.cover_url is not None:
             cover_path = work_dir.joinpath('cover')
             with open(cover_path, 'wb') as f:
-                f.write(download_and_decompress(story.cover_url))
+                f.write(download_and_decompress(metadata.cover_url))
 
         if options.format == OutputFormat.EPUB:
-            create_epub(html, story, options.output_path, cover_path, work_dir)
+            create_epub(html, metadata, options.output_path, cover_path, work_dir)
         else:
             raise NotImplementedError(f'Unimplemented output format: {options.format.name}')
 
-    return story
+    return metadata
+
+def get_chapters(scraper: Scraper, chatper_names: list[str], callback: ProgressCallback) -> list[list]:
+    text = []
+    for ch in range(1, len(chatper_names) + 1):
+        # a random delay to be polite
+        sleep(uniform(0.500, 1.250))
+        callback(ChapterDetails(
+            chapter_title=chatper_names[ch - 1],
+            chapter_number=ch,
+            chapter_count=len(chatper_names),
+        ))
+
+        text.append(scraper.get_text_for_chapter(ch))
+
+    return text
 
 def make_output_html(chapters: Iterable[Tuple[str, List]]) -> str:
     output = BeautifulSoup(html_template, 'html5lib')
@@ -74,8 +96,8 @@ def make_output_html(chapters: Iterable[Tuple[str, List]]) -> str:
 
     return str(output)
 
-def create_epub(html: str, metadata: StoryData, output_path: Path, cover_path: Optional[Path], work_dir: Path):
-    date = metadata.date_utc.strftime('%Y-%m-%d')
+def create_epub(html: str, metadata: StoryMetadata, output_path: Path, cover_path: Optional[Path], work_dir: Path):
+    date = metadata.update_date_utc.strftime('%Y-%m-%d')
     epub_metadata = f'''
     <dc:language>en-US</dc:language>
     <dc:title>{escape(metadata.title)}</dc:title>
