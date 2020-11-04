@@ -4,6 +4,8 @@
 
 ### New features
 
+PDF output support.
+
 ficdl can now download its own updates.
 
 The downloader GUI will now suggest naming the story file after the story's title.

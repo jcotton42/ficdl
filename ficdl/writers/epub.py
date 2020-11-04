@@ -2,19 +2,12 @@ from pathlib import Path
 import pkgutil
 from string import Template
 from tempfile import TemporaryDirectory
-from typing import Iterable, Tuple
 from xml.sax.saxutils import escape
 
-from bs4 import BeautifulSoup, PageElement
 import pypandoc
 
+from ficdl.writers.common import make_html
 from ficdl.writers.types import WriterOptions
-
-HTML_TEMPLATE = '''<!DOCTYPE html>
-<html>
-<body>
-</body>
-</html>'''
 
 EPUB_METADATA_TEMPLATE = Template('''
 <dc:language>$language</dc:language>
@@ -44,7 +37,7 @@ def write_epub(options: WriterOptions):
         meta_file = work_dir.joinpath('meta.xml')
         css_file = work_dir.joinpath('styles.css')
 
-        meta_file.write_text(epub_metadata)
+        meta_file.write_text(epub_metadata, encoding='utf-8')
         css_file.write_bytes(pkgutil.get_data('ficdl', 'assets/styles.css'))
 
         extra_args = [
@@ -56,20 +49,9 @@ def write_epub(options: WriterOptions):
             extra_args.append(f'--epub-cover-image={str(cover_path)}')
 
         pypandoc.convert_text(
-            source=html,
+            source=str(html),
             format='html',
             to='epub',
             outputfile=str(output_path),
             extra_args=extra_args,
         )
-
-def make_html(chapters: Iterable[Tuple[str, list[PageElement]]]) -> str:
-    output = BeautifulSoup(HTML_TEMPLATE, 'html5lib')
-
-    for (title, text) in chapters:
-        h1 = output.new_tag('h1')
-        h1.string = title
-        output.body.append(h1)
-        output.body.extend(text)
-
-    return str(output)

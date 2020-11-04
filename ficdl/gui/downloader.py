@@ -86,13 +86,14 @@ class Downloader(tk.Frame):
             initialfile=suggest_name,
             filetypes=(
                 ('ePub (all eReaders *except* Kindle', '*.epub'),
+                ('PDF', '*.pdf'),
             )
         )
-        
+
         if file == '':
             # Cancel was clicked
             return None
-        
+
         return Path(file)
 
     def on_download_state_changed(self, _event):
