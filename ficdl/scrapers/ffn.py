@@ -50,6 +50,7 @@ def extract_text(page: BeautifulSoup) -> list[PageElement]:
             # pandoc throws away the centering CSS on parsing, so add a div with a custom CSS class
             div = page.new_tag('div')
             div['class'] = 'center'
+            del child['style']
             child = child.wrap(div)
         text.append(child)
 

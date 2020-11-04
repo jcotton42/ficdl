@@ -1,5 +1,6 @@
 from pathlib import Path
 import pkgutil
+import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 
@@ -28,22 +29,24 @@ def write_pdf(options: WriterOptions):
             '--print-media-type',
             '--footer-center', '[page]',
             '--allow', Path(work_dir),
-            '--allow', str(cover_path.parent),
         ]
 
         if cover_path is not None:
+            cover_html_path = work_dir.joinpath('cover.html')
+            cover_html_path.write_bytes(pkgutil.get_data('ficdl', 'assets/pdf-cover.html'))
+
+            shutil.copyfile(cover_path, work_dir.joinpath('cover'))
+
             args.extend([
-                '--allow', str(cover_path.parent),
-                # cover options
+                'cover', str(cover_html_path), '--encoding', 'utf-8',
             ])
         else:
             # no cover image
             ...
 
         args.extend([
-            '--user-style-sheet', str(css_path),
             'toc', '--toc-header-text', 'Chapters',
-            str(html_path), '--encoding', 'utf-8',
+            str(html_path), '--encoding', 'utf-8', '--user-style-sheet', str(css_path),
             str(output_path),
         ])
 
