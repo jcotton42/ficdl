@@ -1,10 +1,9 @@
 from pathlib import Path
-import tempfile
 from typing import Union
 
 from ficdl import __version__, __version_info__
 from ficdl.callbacks import InitialStoryDetails, ChapterDetails
-from ficdl.downloader import DownloadOptions, download_story
+from ficdl.downloader import download_story, write_story
 from ficdl.utils import make_path_safe
 from ficdl.updater import get_latest_release
 
@@ -30,19 +29,12 @@ def cli_main(args):
         print(release.download_url)
         print("*******")
 
-    options = DownloadOptions(
-        url=args.url,
-        format=args.format,
-        output_path=args.output,
-        callback=callback,
-        cover_path=args.cover,
-    )
-    if args.output is not None:
-        download_story(options)
-    else:
-        with tempfile.TemporaryDirectory() as work_dir:
-            temp_path = Path(work_dir).joinpath('story.epub')
-            options.output_path = temp_path
-            story = download_story(options)
-            dest = Path(make_path_safe(story.title) + '.' + options.format.value)
-            temp_path.replace(dest)
+    output = args.output
+    format = args.format
+    cover_path = args.cover
+
+    metadata, text = download_story(args.url, callback)
+    if output is None:
+        output = Path(make_path_safe(metadata.title) + '.' + format.value)
+
+    write_story(metadata, text, format, output, cover_path)

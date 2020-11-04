@@ -1,10 +1,11 @@
-import dataclasses
 import logging
 from pathlib import Path
 from random import uniform
 import tempfile
 from time import sleep
-from typing import Optional
+from typing import Optional, Tuple
+
+from bs4 import PageElement
 
 from ficdl.callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
 from ficdl.scrapers import get_scraper
@@ -15,42 +16,38 @@ from ficdl.writers.types import OutputFormat, WriterOptions
 
 logger = logging.getLogger(__name__)
 
-@dataclasses.dataclass(eq=False)
-class DownloadOptions:
-    url: str
-    format: OutputFormat
-    output_path: Path
-    callback: ProgressCallback
-    cover_path: Optional[Path]
-
-def download_story(options: DownloadOptions) -> StoryMetadata:
-    url = options.url
-    callback = options.callback
-
+def download_story(url: str, callback: ProgressCallback) -> Tuple[StoryMetadata, list[list[PageElement]]]:
     scraper = get_scraper(url)
     metadata = scraper.get_metadata()
     callback(InitialStoryDetails(metadata))
 
     chapters = get_chapters(scraper, metadata.chapter_names, callback)
 
+    return (metadata, chapters)
+
+def write_story(
+    metadata: StoryMetadata,
+    text: list[list[PageElement]],
+    format: OutputFormat,
+    output_path: Path,
+    cover_path: Optional[Path],
+    ):
     with tempfile.TemporaryDirectory() as work_dir:
         work_dir = Path(work_dir)
-        cover_path = options.cover_path
+        cover_path = cover_path
         if cover_path is None and metadata.cover_url is not None:
             cover_path = work_dir.joinpath('cover')
             with open(cover_path, 'wb') as f:
                 f.write(download_and_decompress(metadata.cover_url))
 
-        get_writer(options.format)(WriterOptions(
-            chapter_text=chapters,
+        get_writer(format)(WriterOptions(
+            chapter_text=text,
             metadata=metadata,
-            output_path=options.output_path,
+            output_path=output_path,
             cover_path=cover_path,
         ))
 
-    return metadata
-
-def get_chapters(scraper: Scraper, chatper_names: list[str], callback: ProgressCallback) -> list[list]:
+def get_chapters(scraper: Scraper, chatper_names: list[str], callback: ProgressCallback) -> list[list[PageElement]]:
     text = []
     for ch in range(1, len(chatper_names) + 1):
         # a random delay to be polite
