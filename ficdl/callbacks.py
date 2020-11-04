@@ -1,16 +1,12 @@
 from typing import Callable, Union
 
-class InitialStoryDetails:
-    title: str
-    author: str
-    first_chapter_title: str
-    chapter_count: int
+from ficdl.scrapers.types import StoryMetadata
 
-    def __init__(self, title, author, first_chapter_title, chapter_count):
-        self.title = title
-        self.author = author
-        self.first_chapter_title = first_chapter_title
-        self.chapter_count = chapter_count
+class InitialStoryDetails:
+    metadata: StoryMetadata
+
+    def __init__(self, metadata: StoryMetadata):
+        self.metadata = metadata
 
 class ChapterDetails:
     chapter_title: str

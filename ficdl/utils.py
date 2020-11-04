@@ -1,7 +1,5 @@
-from datetime import datetime
 from gzip import GzipFile
 from io import BytesIO
-from typing import Iterable, TypeVar
 from urllib.request import urlopen
 
 import logging
@@ -18,24 +16,6 @@ def make_path_safe(stem: str) -> str:
         return stem + '_'
     else:
         return INVALID_PATH_CHARS.sub('_', stem)
-
-class StoryData:
-    title: str
-    author: str
-    cover_url: str
-    chapter_names: Iterable[str]
-    chapter_text: Iterable[list]
-    description: str
-    date_utc: datetime
-
-    def __init__(self, title, author, cover_url, chapter_names, chapter_text, description, date_utc):
-        self.title = title
-        self.author = author
-        self.cover_url = cover_url
-        self.chapter_names = chapter_names
-        self.chapter_text = chapter_text
-        self.description = description
-        self.date_utc = date_utc
 
 def download_and_decompress(url):
     with urlopen(url) as response:

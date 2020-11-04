@@ -1,88 +1,63 @@
-from ast import Str
-from ficdl.utils import download_and_decompress, StoryData
-from bs4 import BeautifulSoup
-from typing import Iterable, List, Optional, Tuple
-from xml.sax.saxutils import escape
-
 import logging
-import os
-import os.path
-import pkgutil
+from pathlib import Path
+from random import uniform
 import tempfile
+from time import sleep
+from typing import Optional, Tuple
 
-import pypandoc
+from bs4 import PageElement
 
-from . import ffn
-from .callbacks import ProgressCallback
+from ficdl.callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
+from ficdl.scrapers import get_scraper
+from ficdl.scrapers.types import Scraper, StoryMetadata
+from ficdl.utils import download_and_decompress
+from ficdl.writers import get_writer
+from ficdl.writers.types import OutputFormat, WriterOptions
 
 logger = logging.getLogger(__name__)
 
-html_template = '''<!DOCTYPE html>
-<html>
-<body>
-</body>
-</html>'''
+def download_story(url: str, callback: ProgressCallback) -> Tuple[StoryMetadata, list[list[PageElement]]]:
+    scraper = get_scraper(url)
+    metadata = scraper.get_metadata()
+    callback(InitialStoryDetails(metadata))
 
-def download_story(url: str, cover_path: Optional[str], output_path: str, dump_html_to: Optional[str], callback: ProgressCallback) -> StoryData:
-    story = ffn.download_story(url, callback)
+    chapters = get_chapters(scraper, metadata.chapter_names, callback)
 
-    html = make_output_html(zip(story.chapter_names, story.chapter_text))
+    return (metadata, chapters)
 
-    if dump_html_to is not None:
-        with open(dump_html_to, 'w') as f:
-            f.write(html)
-
+def write_story(
+    metadata: StoryMetadata,
+    text: list[list[PageElement]],
+    format: OutputFormat,
+    output_path: Path,
+    cover_path: Optional[Path],
+    ):
     with tempfile.TemporaryDirectory() as work_dir:
-        if cover_path is None and story.cover_url is not None:
-            cover_path = os.path.join(work_dir, 'cover')
+        work_dir = Path(work_dir)
+        cover_path = cover_path
+        if cover_path is None and metadata.cover_url is not None:
+            cover_path = work_dir.joinpath('cover')
             with open(cover_path, 'wb') as f:
-                f.write(download_and_decompress(story.cover_url))
+                f.write(download_and_decompress(metadata.cover_url))
 
-        create_epub(html, story, output_path, cover_path, work_dir)
+        get_writer(format)(WriterOptions(
+            chapter_text=text,
+            metadata=metadata,
+            output_path=output_path,
+            cover_path=cover_path,
+        ))
 
-    return story
+def get_chapters(scraper: Scraper, chatper_names: list[str], callback: ProgressCallback) -> list[list[PageElement]]:
+    text = []
+    for ch in range(1, len(chatper_names) + 1):
+        # a random delay to be polite
+        sleep(uniform(0.500, 1.250))
+        callback(ChapterDetails(
+            chapter_title=chatper_names[ch - 1],
+            chapter_number=ch,
+            chapter_count=len(chatper_names),
+        ))
 
-def make_output_html(chapters: Iterable[Tuple[str, List]]) -> str:
-    output = BeautifulSoup(html_template, 'html5lib')
+        text.append(scraper.get_text_for_chapter(ch))
 
-    for (title, text) in chapters:
-        h1 = output.new_tag('h1')
-        h1.string = title
-        output.body.append(h1)
-        output.body.extend(text)
-
-    return str(output)
-
-def create_epub(html: str, metadata: StoryData, output_path: str, cover_path: Optional[str], work_dir: str):
-    date = metadata.date_utc.strftime('%Y-%m-%d')
-    epub_metadata = f'''
-    <dc:language>en-US</dc:language>
-    <dc:title>{escape(metadata.title)}</dc:title>
-    <dc:creator>{escape(metadata.author)}</dc:creator>
-    <dc:date>{date}</dc:date>
-    <dc:description>{escape(metadata.description)}</dc:description>
-    '''
-
-    meta_file = os.path.join(work_dir, 'meta.xml')
-    with open(meta_file, 'w') as f:
-        f.write(epub_metadata)
-
-    css = pkgutil.get_data('ficdl', 'assets/styles.css')
-    css_file = os.path.join(work_dir, 'styles.css')
-    with open(css_file, 'wb') as f:
-        f.write(css)
-
-    extra_args = [f'--epub-metadata={meta_file}', f'--css={css_file}', '--toc']
-    if cover_path:
-        extra_args.append(f'--epub-cover-image={cover_path}')
-    pypandoc.convert_text(
-        source=html,
-        format='html',
-        to='epub',
-        outputfile=output_path,
-        extra_args=extra_args,
-    )
-
-def create_kindle(epub_path: str, output_path: str):
-    # look at how pypandoc handles calling pandoc for inspiration
-    ...
+    return text
