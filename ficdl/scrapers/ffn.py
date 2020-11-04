@@ -1,4 +1,4 @@
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, PageElement, Tag
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -43,7 +43,7 @@ def extract_cover_url(page: BeautifulSoup) -> str:
         url = 'https:' + url
     return url
 
-def extract_text(page: BeautifulSoup) -> list:
+def extract_text(page: BeautifulSoup) -> list[PageElement]:
     text = []
     for child in page.find(id='storytext').children:
         if isinstance(child, Tag) and child.has_attr('style') and CENTER_STYLE.match(child['style']):
@@ -95,7 +95,7 @@ class FFNScraper(Scraper):
             update_date_utc=update_date_utc
         )
 
-    def get_text_for_chapter(self, number: int) -> list:
+    def get_text_for_chapter(self, number: int) -> list[PageElement]:
         if number == 1 and self.first_chapter is not None:
             chapter = self.first_chapter
         else:

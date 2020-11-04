@@ -11,8 +11,9 @@ import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
 
 from ficdl.callbacks import ChapterDetails, InitialStoryDetails
-from ficdl.downloader import DownloadOptions, download_story, OutputFormat
+from ficdl.downloader import DownloadOptions, download_story
 from ficdl.utils import make_path_safe
+from ficdl.writers.types import OutputFormat
 
 DOWNLOAD_STATE_CHANGED = '<<DownloadStateChanged>>'
 
@@ -123,7 +124,6 @@ class Downloader(tk.Frame):
                 format=OutputFormat.EPUB,
                 output_path=story_path,
                 cover_path=cover,
-                dump_html_to=None,
                 callback=self.download_callback,
             ))
             self.download_data.put(DownloadFinished(work_dir, story_path, story_data.title))

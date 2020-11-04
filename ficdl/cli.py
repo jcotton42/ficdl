@@ -1,13 +1,12 @@
-from typing import Union
-
 from pathlib import Path
 import tempfile
+from typing import Union
 
 from ficdl import __version__, __version_info__
+from ficdl.callbacks import InitialStoryDetails, ChapterDetails
+from ficdl.downloader import DownloadOptions, download_story
 from ficdl.utils import make_path_safe
-from .callbacks import InitialStoryDetails, ChapterDetails
-from .downloader import DownloadOptions, download_story, OutputFormat
-from .updater import get_latest_release
+from ficdl.updater import get_latest_release
 
 def callback(details: Union[InitialStoryDetails, ChapterDetails]):
     if isinstance(details, InitialStoryDetails):
@@ -37,7 +36,6 @@ def cli_main(args):
         output_path=args.output,
         callback=callback,
         cover_path=args.cover,
-        dump_html_to=args.dump_html_to
     )
     if args.output is not None:
         download_story(options)

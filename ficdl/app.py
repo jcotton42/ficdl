@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import ficdl.updater as updater
-
 import argparse
 from dataclasses import dataclass
 import logging
@@ -13,8 +11,9 @@ import pypandoc
 
 from ficdl import __version__, __version_info__
 from ficdl.cli import cli_main
-from ficdl.downloader import OutputFormat
 from ficdl.gui import gui_main
+import ficdl.updater as updater
+from ficdl.writers.types import OutputFormat
 
 COULD_NOT_INSTALL_PANDOC = 1
 
@@ -26,7 +25,6 @@ class Args:
     format: OutputFormat
     update: bool
     verbose: bool
-    dump_html_to: Path
 
 def parse_args() -> Args:
     parser = argparse.ArgumentParser('ficdl', description='A fan fiction downloader')
@@ -53,8 +51,6 @@ def parse_args() -> Args:
     parser.add_argument('-v', '--verbose', action='store_true', help='output information about chapter scraping, etc.')
     parser.add_argument('-V', '--version', action='version', version='%(prog)s {}'.format(__version__))
 
-    parser.add_argument('--dump-html-to', type=Path, help='debug option for dumping the generated HTML document')
-
     parsed = parser.parse_args()
     if parsed.format:
         format = OutputFormat(parsed.format)
@@ -73,7 +69,6 @@ def parse_args() -> Args:
         format=format,
         update=parsed.update,
         verbose=parsed.verbose,
-        dump_html_to=parsed.dump_html_to
     )
 
 def main():
