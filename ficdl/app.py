@@ -56,7 +56,7 @@ def parse_args() -> Args:
         format = OutputFormat(parsed.format)
     elif parsed.output:
         try:
-            format = OutputFormat(parsed.format.suffix.lstrip('.').lower())
+            format = OutputFormat(parsed.output.suffix.lstrip('.').lower())
         except ValueError:
             parser.error(f'Unknown output format inferred from path. Please explicitly specify using `--format`.')
     else:
