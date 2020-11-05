@@ -28,7 +28,7 @@ def write_pdf(options: WriterOptions):
             '--title', metadata.title,
             '--print-media-type',
             '--footer-center', '[page]',
-            '--allow', Path(work_dir),
+            '--allow', str(work_dir),
         ]
 
         if cover_path is not None:

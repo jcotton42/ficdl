@@ -33,7 +33,7 @@ def extract_chapter_names(page: BeautifulSoup) -> Optional[list[str]]:
 
     return chapters
 
-def extract_cover_url(page: BeautifulSoup) -> str:
+def extract_cover_url(page: BeautifulSoup) -> Optional[str]:
     cover = page.select_one('.cimage[data-original]')
     if cover is None:
         return None
