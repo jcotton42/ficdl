@@ -1,14 +1,14 @@
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, Optional
+from typing import Optional
 
 @dataclass(eq=False)
 class StoryMetadata:
     title: str
     author: str
     cover_url: Optional[str]
-    chapter_names: Iterable[str]
+    chapter_names: list[str]
     description: str
     update_date_utc: datetime
 
