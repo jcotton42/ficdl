@@ -43,3 +43,10 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     page-break-before: always;
   }
 }
+h1 {
+  font-family: Verdana, sans-serif;
+}
+p {
+  font-family: Verdana, sans-serif;
+  line-height: 1.25;
+}
