@@ -9,6 +9,7 @@ import logging
 import re
 
 CENTER_STYLE = re.compile(r'text-align\s*:\s*center', re.IGNORECASE)
+UNDERLINE_STYLE = re.compile(r'text-decoration\s*:\s*underline', re.IGNORECASE)
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +47,17 @@ def extract_cover_url(page: BeautifulSoup) -> Optional[str]:
 def extract_text(page: BeautifulSoup) -> list[PageElement]:
     text = []
     for child in page.find(id='storytext').children:
-        if isinstance(child, Tag) and child.has_attr('style') and CENTER_STYLE.match(child['style']):
-            # pandoc throws away the centering CSS on parsing, so add a div with a custom CSS class
-            div = page.new_tag('div')
-            div['class'] = 'center'
-            del child['style']
-            child = child.wrap(div)
+        if isinstance(child, Tag) and child.name == 'p':
+            if child.has_attr('style') and CENTER_STYLE.match(child['style']):
+                # pandoc throws away the centering CSS on parsing, so add a div with a custom CSS class
+                div = page.new_tag('div')
+                div['class'] = 'center'
+                del child['style']
+                child = child.wrap(div)
+            for span in child.find_all(name='span', style=UNDERLINE_STYLE):
+                span['class'] = 'underline'
+                del span['style']
+
         text.append(child)
 
     return text
