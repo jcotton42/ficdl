@@ -20,7 +20,11 @@ def write_pdf(options: WriterOptions):
         css_path = work_dir.joinpath('styles.css')
         html_path = work_dir.joinpath('story.html')
 
-        css_path.write_bytes(pkgutil.get_data('ficdl', 'assets/styles.css'))
+        with css_path.open('w', encoding='utf-8') as f:
+            f.write(pkgutil.get_data('ficdl', 'assets/styles.css').decode('utf-8'))
+            f.write('\n')
+            f.write(pkgutil.get_data('ficdl', 'assets/pdf.css').decode('utf-8'))
+
         html_path.write_text(str(html), encoding='utf-8')
 
         args = [
