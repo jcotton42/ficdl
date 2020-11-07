@@ -1,6 +1,7 @@
 from pathlib import Path
 import pkgutil
 import shutil
+from string import Template
 import subprocess
 from tempfile import TemporaryDirectory
 
@@ -23,7 +24,14 @@ def write_pdf(options: WriterOptions):
         with css_path.open('w', encoding='utf-8') as f:
             f.write(pkgutil.get_data('ficdl', 'assets/styles.css').decode('utf-8'))
             f.write('\n')
-            f.write(pkgutil.get_data('ficdl', 'assets/pdf.css').decode('utf-8'))
+            pdf_css = Template(
+                pkgutil.get_data('ficdl', 'assets/pdf.css').decode('utf-8')
+            ).substitute(
+                type_face=options.type_face,
+                font_size=options.font_size,
+                line_height=options.line_height,
+            )
+            f.write(pdf_css)
 
         html_path.write_text(str(html), encoding='utf-8')
 
@@ -33,6 +41,7 @@ def write_pdf(options: WriterOptions):
             '--print-media-type',
             '--footer-center', '[page]',
             '--allow', str(work_dir),
+            '--page-size', options.page_size,
         ]
 
         if cover_path is not None:

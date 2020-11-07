@@ -1,11 +1,77 @@
+import argparse
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from ficdl import __version__, __version_info__
 from ficdl.callbacks import InitialStoryDetails, ChapterDetails
 from ficdl.downloader import download_story, write_story
 from ficdl.utils import make_path_safe
 from ficdl.updater import get_latest_release
+from ficdl.writers.types import OutputFormat
+
+@dataclass(eq=False)
+class Args:
+    url: Optional[str]
+    output: Optional[Path]
+    cover: Optional[Path]
+    format: OutputFormat
+    update: bool
+    verbose: bool
+
+def parse_args() -> Args:
+    def path_that_exists(path: Optional[str]) -> Optional[Path]:
+        if path is None:
+            return None
+
+        p = Path(path)
+        if not p.exists():
+            raise argparse.ArgumentTypeError(f'"{p}" does not exist')
+        return p
+
+    parser = argparse.ArgumentParser('ficdl', description='A fan fiction downloader')
+    parser.add_argument('url', nargs='?', default=None, help='the URL to the story to download')
+    parser.add_argument(
+        '-o', '--output',
+        metavar='FILE',
+        type=Path,
+        help='what file to output the story to. Attempts to automatically determine if not specified',
+    )
+    parser.add_argument(
+        '-c', '--cover',
+        type=path_that_exists,
+        help='path to a cover for the eBook. For best results use a PNG or JPG smaller than 1,000x1,000px',
+    )
+    parser.add_argument(
+        '-f', '--format',
+        choices=[v.value for v in OutputFormat.__members__.values()],
+        help='The format to save the story in. Defaults to format implied by output path, epub otherwise.',
+    )
+
+    parser.add_argument('--update', action='store_true', help='installs the latest version of ficdl')
+
+    parser.add_argument('-v', '--verbose', action='store_true', help='output information about chapter scraping, etc.')
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s {}'.format(__version__))
+
+    parsed = parser.parse_args()
+    if parsed.format:
+        format = OutputFormat(parsed.format)
+    elif parsed.output:
+        try:
+            format = OutputFormat(parsed.output.suffix.lstrip('.').lower())
+        except ValueError:
+            parser.error(f'Unknown output format inferred from path. Please explicitly specify using -f or --format.')
+    else:
+        format = OutputFormat.EPUB
+
+    return Args(
+        url=parsed.url,
+        output=parsed.output,
+        cover=parsed.cover,
+        format=format,
+        update=parsed.update,
+        verbose=parsed.verbose,
+    )
 
 def callback(details: Union[InitialStoryDetails, ChapterDetails]):
     if isinstance(details, InitialStoryDetails):
@@ -21,7 +87,7 @@ def callback(details: Union[InitialStoryDetails, ChapterDetails]):
     else:
         raise Exception("jcotton42 forgot to update all the progress callbacks")
 
-def cli_main(args):
+def cli_main(args: Args):
     release = get_latest_release()
     if release.version > __version_info__:
         print("*******")

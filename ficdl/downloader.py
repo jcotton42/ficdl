@@ -8,6 +8,7 @@ from typing import Optional, Tuple
 from bs4 import PageElement
 
 from ficdl.callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
+from ficdl.config import CONFIG
 from ficdl.scrapers import get_scraper
 from ficdl.scrapers.types import Scraper, StoryMetadata
 from ficdl.utils import download_and_decompress
@@ -45,6 +46,10 @@ def write_story(
             metadata=metadata,
             output_path=output_path,
             cover_path=cover_path,
+            type_face=CONFIG.default_type_face,
+            font_size=CONFIG.default_font_size,
+            line_height=CONFIG.default_line_height,
+            page_size=CONFIG.default_pdf_page_size,
         ))
 
 def get_chapters(scraper: Scraper, chatper_names: list[str], callback: ProgressCallback) -> list[list[PageElement]]:

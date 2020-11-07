@@ -1,9 +1,10 @@
 h1 {
   page-break-before: always;
-  font-family: Verdana, sans-serif;
+  font-family: $type_face, sans-serif;
 }
 
 p {
-  font-family: Verdana, sans-serif;
-  line-height: 1.25;
+  font-family: $type_face, sans-serif;
+  font-size: $font_size;
+  line-height: $line_height;
 }
