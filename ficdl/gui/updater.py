@@ -39,4 +39,4 @@ class Updater(tk.Toplevel):
             ttk.Button(self, text='OK', command=self.destroy).pack(anchor='se')
 
     def update_ficdl(self, url):
-        ficdl.updater.install_update(url, True)
+        ficdl.updater.install_update(url, restart_app=True)

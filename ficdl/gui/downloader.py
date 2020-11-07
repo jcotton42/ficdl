@@ -12,9 +12,10 @@ import tkinter.messagebox as messagebox
 from bs4 import PageElement
 
 from ficdl.callbacks import ChapterDetails, InitialStoryDetails
+from ficdl.config import CONFIG
 from ficdl.downloader import download_story, write_story
 from ficdl.utils import make_path_safe
-from ficdl.writers.types import OutputFormat
+from ficdl.writers.types import OutputFormat, WriterOptions
 
 DOWNLOAD_STATE_CHANGED = '<<DownloadStateChanged>>'
 
@@ -65,7 +66,7 @@ class Downloader(tk.Frame):
             filetypes=(
                 ('All supported images', '.jpg .jpeg .png'),
                 ('PNG', '.png'),
-                ('JPG', '.jpg .jpeg')
+                ('JPG', '.jpg .jpeg'),
             )
         )
 
@@ -85,8 +86,8 @@ class Downloader(tk.Frame):
             defaultextension='.epub',
             initialfile=suggest_name,
             filetypes=(
-                ('ePub (all eReaders *except* Kindle', '*.epub'),
-                ('PDF', '*.pdf'),
+                ('ePub (all eReaders *except* Kindle)', '.epub'),
+                ('PDF', '.pdf'),
             )
         )
 
@@ -98,7 +99,16 @@ class Downloader(tk.Frame):
 
     def on_download_state_changed(self, _event):
         def save_to_disk(metadata, text, format, output_path, cover_path):
-            write_story(metadata, text, format, output_path, cover_path)
+            write_story(format, WriterOptions(
+                chapter_text=text,
+                metadata=metadata,
+                output_path=output_path,
+                cover_path=cover_path,
+                font_family=CONFIG.default_font_family,
+                font_size=CONFIG.default_font_size,
+                line_height=CONFIG.default_line_height,
+                page_size=CONFIG.default_page_size,
+            ))
             self.download_data.put(SaveFinished(save_path=output_path))
             self.event_generate(DOWNLOAD_STATE_CHANGED)
 

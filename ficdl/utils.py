@@ -1,10 +1,12 @@
 from gzip import GzipFile
 from io import BytesIO
-from urllib.request import urlopen
-
 import logging
 import re
 import sys
+import tkinter as tk
+import tkinter.font as tkfont
+from typing import Optional
+from urllib.request import urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,15 @@ def make_path_safe(stem: str) -> str:
         return stem + '_'
     else:
         return INVALID_PATH_CHARS.sub('_', stem)
+
+def get_font_families(root: Optional[tk.Misc]) -> list[str]:
+    if root is None:
+        root = tk.Tk()
+        fonts = sorted(tkfont.families(root))
+        root.destroy()
+    else:
+        fonts = sorted(tkfont.families(root))
+    return fonts
 
 def download_and_decompress(url):
     with urlopen(url) as response:

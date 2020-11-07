@@ -37,9 +37,3 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 .center {
   text-align: center;
 }
-/* For PDFs */
-@media print {
-  h1 {
-    page-break-before: always;
-  }
-}

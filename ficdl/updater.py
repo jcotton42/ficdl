@@ -56,5 +56,5 @@ def install_update(download_url: str, restart_app: bool) -> NoReturn:
     if restart_app:
         python_args.append('--restart-app')
 
-    # no that's a typo, the second sys.executable provides sys.argv[0]
+    # no that's not a typo, the second sys.executable provides sys.argv[0]
     os.execl(sys.executable, sys.executable, *python_args)

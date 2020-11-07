@@ -12,11 +12,15 @@ class OutputFormat(enum.Enum):
     EPUB = 'epub'
     PDF = 'pdf'
 
-@dataclass(eq=False)
+@dataclass(eq=False, frozen=True)
 class WriterOptions:
     chapter_text: list[list[PageElement]]
     metadata: StoryMetadata
     output_path: Path
     cover_path: Optional[Path]
+    font_family: str
+    font_size: str
+    line_height: str
+    page_size: str
 
 Writer = Callable[[WriterOptions], None]
