@@ -3,6 +3,7 @@ import tkinter.messagebox as messagebox
 import tkinter.ttk as ttk
 
 from ficdl.config import CONFIG
+from ficdl.utils import get_font_families
 
 class Preferences(tk.Toplevel):
     def __init__(self, master):
@@ -21,19 +22,19 @@ class Preferences(tk.Toplevel):
 
         row = 0
         ttk.Label(style_prefs, text='Font family: ').grid(row=row, column=0, sticky='w')
-        ttk.Entry(style_prefs, textvariable=self.font_family).grid(row=row, column=1)
+        ttk.Combobox(style_prefs, values=get_font_families(self), textvariable=self.font_family, state='readonly').grid(row=row, column=1, sticky='ew')
 
         row += 1
         ttk.Label(style_prefs, text='Font size: ').grid(row=row, column=0, sticky='w')
-        ttk.Entry(style_prefs, textvariable=self.font_size).grid(row=row, column=1)
+        ttk.Entry(style_prefs, textvariable=self.font_size).grid(row=row, column=1, sticky='ew')
 
         row += 1
         ttk.Label(style_prefs, text='Line height: ').grid(row=row, column=0, sticky='w')
-        ttk.Entry(style_prefs, textvariable=self.line_height).grid(row=row, column=1)
+        ttk.Entry(style_prefs, textvariable=self.line_height).grid(row=row, column=1, sticky='ew')
 
         row += 1
         ttk.Label(style_prefs, text='Page size: ').grid(row=row, column=0, sticky='w')
-        ttk.Entry(style_prefs, textvariable=self.page_size).grid(row=row, column=1)
+        ttk.Entry(style_prefs, textvariable=self.page_size).grid(row=row, column=1, sticky='ew')
 
         button_frame = ttk.Frame(self)
         button_frame.pack(side='right')

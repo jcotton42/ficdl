@@ -7,7 +7,7 @@ from ficdl import __version__, __version_info__
 from ficdl.callbacks import InitialStoryDetails, ChapterDetails
 from ficdl.config import CONFIG
 from ficdl.downloader import download_story, write_story
-from ficdl.utils import make_path_safe
+from ficdl.utils import get_font_families, make_path_safe
 from ficdl.updater import get_latest_release
 from ficdl.writers.types import OutputFormat, WriterOptions
 
@@ -34,6 +34,11 @@ def parse_args() -> Args:
             raise argparse.ArgumentTypeError(f'"{p}" does not exist')
         return p
 
+    def font_family_that_exists(font_family: str) -> str:
+        if not font_family in get_font_families(None):
+            raise argparse.ArgumentTypeError(f'Font family {font_family} does not exist')
+        return font_family
+
     parser = argparse.ArgumentParser('ficdl', description='A fan fiction downloader')
     parser.add_argument('url', nargs='?', default=None, help='the URL to the story to download')
     parser.add_argument(
@@ -54,6 +59,7 @@ def parse_args() -> Args:
     )
     parser.add_argument(
         '--font-family',
+        type=font_family_that_exists,
         default=CONFIG.default_font_family,
         help='the font family for non-eBook formats. (default: %(default)s)',
     )
