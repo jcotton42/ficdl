@@ -13,7 +13,7 @@ def _get_config_dir() -> Path:
         path = Path(os.path.expandvars('%AppData%/jcotton42/ficdl'))
     else:
         path = xdg_config_home().joinpath('jcotton42/ficdl')
-    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    path.mkdir(mode=0o770, parents=True, exist_ok=True)
     return path
 
 def _get_cache_dir() -> Path:
@@ -21,7 +21,7 @@ def _get_cache_dir() -> Path:
         path = Path(os.path.expandvars('%LocalAppData%/jcotton42/ficdl/cache'))
     else:
         path = xdg_cache_home().joinpath('jcotton42/ficdl')
-    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    path.mkdir(mode=0o770, parents=True, exist_ok=True)
     return path
 
 _CONFIG_PATH = _get_config_dir().joinpath('config.json')
@@ -30,7 +30,7 @@ _CONFIG_PATH = _get_config_dir().joinpath('config.json')
 class Config:
     default_type_face: str = 'Verdana'
     default_font_size: str = '14pt'
-    default_line_height: str = '1.25'
+    default_line_height: str = '1.5'
     default_pdf_page_size: str = 'A4'
 
     def save(self):

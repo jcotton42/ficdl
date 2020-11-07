@@ -1,14 +1,16 @@
+from threading import Thread
 import tkinter as tk
-from tkinter import Label, messagebox
 import tkinter.messagebox as messagebox
-import tkinter.ttk as ttk
 
-from .converter import Converter
-from .downloader import Downloader
-from .subscription_manager import SubscriptionManager
-from .updater import Updater
 from ficdl import __version__, __version_info__
+from ficdl.gui.converter import Converter
+from ficdl.gui.downloader import Downloader
+from ficdl.gui.preferences import Preferences
+from ficdl.gui.subscription_manager import SubscriptionManager
+from ficdl.gui.updater import Updater
 from ficdl.updater import get_latest_release
+
+UPDATE_AVAILABE = '<<UpdateAvailabe>>'
 
 class Gui(tk.Tk):
     def __init__(self):
@@ -16,15 +18,16 @@ class Gui(tk.Tk):
         self.title(f'ficdl v{__version__}')
         self.create_menu()
         self.create_widgets()
+        self.bind(UPDATE_AVAILABE, self.show_updater)
 
-        release = get_latest_release()
-        if release.version > __version_info__:
-            self.show_updater(release)
+        Thread(target=self.check_for_update).start()
 
     def create_menu(self):
         menubar = tk.Menu(self, tearoff=False)
 
         file_menu = tk.Menu(menubar, tearoff=False)
+        file_menu.add_command(label='Preferences...', command=self.show_preferences)
+        file_menu.add_separator()
         file_menu.add_command(label='Exit', command=self.quit)
         menubar.add_cascade(label='File', menu=file_menu)
 
@@ -48,13 +51,22 @@ class Gui(tk.Tk):
         row += 1
         SubscriptionManager(self, self).grid(row=row, column=0, sticky=tk.W)
 
+    def check_for_update(self):
+        release = get_latest_release()
+        if release.version > __version_info__:
+            self.new_release = release
+            self.event_generate(UPDATE_AVAILABE)
+
     def show_about(self):
         messagebox.showinfo('About ficdl', f'ficdl version {__version__}\nMade by jcotton42')
 
-    def show_updater(self, release):
-        updater = Updater(self, release)
-        updater.focus_set()
-        self.wait_window(updater)
+    def show_preferences(self):
+        Preferences(self)
+
+    def show_updater(self, _event):
+        updater = Updater(self, self.new_release)
+        updater.lift()
+        updater.grab_set()
 
 def gui_main():
     Gui().mainloop()
