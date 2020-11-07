@@ -136,7 +136,7 @@ def cli_main(args: Args):
 
     metadata, text = download_story(args.url, callback)
     if output is None:
-        output = Path(make_path_safe(metadata.title) + '.' + format.value)
+        output = Path(make_path_safe(metadata.title) + format.suffix)
 
     write_story(format, WriterOptions(
         chapter_text=text,
