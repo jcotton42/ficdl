@@ -5,10 +5,11 @@ from typing import Optional, Union
 
 from ficdl import __version__, __version_info__
 from ficdl.callbacks import InitialStoryDetails, ChapterDetails
+from ficdl.config import CONFIG
 from ficdl.downloader import download_story, write_story
 from ficdl.utils import make_path_safe
 from ficdl.updater import get_latest_release
-from ficdl.writers.types import OutputFormat
+from ficdl.writers.types import OutputFormat, WriterOptions
 
 @dataclass(eq=False)
 class Args:
@@ -103,4 +104,13 @@ def cli_main(args: Args):
     if output is None:
         output = Path(make_path_safe(metadata.title) + '.' + format.value)
 
-    write_story(metadata, text, format, output, cover_path)
+    write_story(format, WriterOptions(
+        chapter_text=text,
+        metadata=metadata,
+        output_path=output,
+        cover_path=cover_path,
+        type_face=CONFIG.default_type_face,
+        font_size=CONFIG.default_font_size,
+        line_height=CONFIG.default_line_height,
+        page_size=CONFIG.default_pdf_page_size,
+    ))

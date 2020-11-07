@@ -1,14 +1,14 @@
+import dataclasses
 import logging
 from pathlib import Path
 from random import uniform
 import tempfile
 from time import sleep
-from typing import Optional, Tuple
+from typing import Tuple
 
 from bs4 import PageElement
 
 from ficdl.callbacks import ChapterDetails, InitialStoryDetails, ProgressCallback
-from ficdl.config import CONFIG
 from ficdl.scrapers import get_scraper
 from ficdl.scrapers.types import Scraper, StoryMetadata
 from ficdl.utils import download_and_decompress
@@ -26,31 +26,17 @@ def download_story(url: str, callback: ProgressCallback) -> Tuple[StoryMetadata,
 
     return (metadata, chapters)
 
-def write_story(
-    metadata: StoryMetadata,
-    text: list[list[PageElement]],
-    format: OutputFormat,
-    output_path: Path,
-    cover_path: Optional[Path],
-    ):
+def write_story(format: OutputFormat, writer_options: WriterOptions):
     with tempfile.TemporaryDirectory() as work_dir:
         work_dir = Path(work_dir)
-        cover_path = cover_path
-        if cover_path is None and metadata.cover_url is not None:
+        cover_path = writer_options.cover_path
+        if cover_path is None and writer_options.metadata.cover_url is not None:
             cover_path = work_dir.joinpath('cover')
             with open(cover_path, 'wb') as f:
-                f.write(download_and_decompress(metadata.cover_url))
+                f.write(download_and_decompress(writer_options.metadata.cover_url))
+            writer_options = dataclasses.replace(writer_options, cover_path=cover_path)
 
-        get_writer(format)(WriterOptions(
-            chapter_text=text,
-            metadata=metadata,
-            output_path=output_path,
-            cover_path=cover_path,
-            type_face=CONFIG.default_type_face,
-            font_size=CONFIG.default_font_size,
-            line_height=CONFIG.default_line_height,
-            page_size=CONFIG.default_pdf_page_size,
-        ))
+        get_writer(format)(writer_options)
 
 def get_chapters(scraper: Scraper, chatper_names: list[str], callback: ProgressCallback) -> list[list[PageElement]]:
     text = []
