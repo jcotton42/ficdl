@@ -104,10 +104,10 @@ class Downloader(tk.Frame):
                 metadata=metadata,
                 output_path=output_path,
                 cover_path=cover_path,
-                type_face=CONFIG.default_type_face,
+                font_family=CONFIG.default_font_family,
                 font_size=CONFIG.default_font_size,
                 line_height=CONFIG.default_line_height,
-                page_size=CONFIG.default_pdf_page_size,
+                page_size=CONFIG.default_page_size,
             ))
             self.download_data.put(SaveFinished(save_path=output_path))
             self.event_generate(DOWNLOAD_STATE_CHANGED)

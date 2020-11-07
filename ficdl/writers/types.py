@@ -18,7 +18,7 @@ class WriterOptions:
     metadata: StoryMetadata
     output_path: Path
     cover_path: Optional[Path]
-    type_face: str
+    font_family: str
     font_size: str
     line_height: str
     page_size: str

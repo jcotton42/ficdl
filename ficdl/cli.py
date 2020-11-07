@@ -19,6 +19,10 @@ class Args:
     format: OutputFormat
     update: bool
     verbose: bool
+    font_family: str
+    font_size: str
+    line_height: str
+    page_size: str
 
 def parse_args() -> Args:
     def path_that_exists(path: Optional[str]) -> Optional[Path]:
@@ -46,13 +50,33 @@ def parse_args() -> Args:
     parser.add_argument(
         '-f', '--format',
         choices=[v.value for v in OutputFormat.__members__.values()],
-        help='The format to save the story in. Defaults to format implied by output path, epub otherwise.',
+        help='the format to save the story in. Defaults to format implied by output path, epub otherwise',
+    )
+    parser.add_argument(
+        '--font-family',
+        default=CONFIG.default_font_family,
+        help='the font family for non-eBook formats. (default: %(default)s)',
+    )
+    parser.add_argument(
+        '--font-size',
+        default=CONFIG.default_font_size,
+        help='the font size for non-eBook formats. (default: %(default)s)',
+    )
+    parser.add_argument(
+        '--line-height',
+        default=CONFIG.default_line_height,
+        help='the line height for non-eBook formats. (default: %(default)s)',
+    )
+    parser.add_argument(
+        '--page-size',
+        default=CONFIG.default_page_size,
+        help='the page size for non-reflowable formats (e.g. PDF). (default: %(default)s)',
     )
 
     parser.add_argument('--update', action='store_true', help='installs the latest version of ficdl')
 
     parser.add_argument('-v', '--verbose', action='store_true', help='output information about chapter scraping, etc.')
-    parser.add_argument('-V', '--version', action='version', version='%(prog)s {}'.format(__version__))
+    parser.add_argument('--version', action='version', version='%(prog)s {}'.format(__version__))
 
     parsed = parser.parse_args()
     if parsed.format:
@@ -72,6 +96,10 @@ def parse_args() -> Args:
         format=format,
         update=parsed.update,
         verbose=parsed.verbose,
+        font_family=parsed.font_family,
+        font_size=parsed.font_size,
+        line_height=parsed.line_height,
+        page_size=parsed.page_size,
     )
 
 def callback(details: Union[InitialStoryDetails, ChapterDetails]):
@@ -109,8 +137,8 @@ def cli_main(args: Args):
         metadata=metadata,
         output_path=output,
         cover_path=cover_path,
-        type_face=CONFIG.default_type_face,
-        font_size=CONFIG.default_font_size,
-        line_height=CONFIG.default_line_height,
-        page_size=CONFIG.default_pdf_page_size,
+        font_family=args.font_family,
+        font_size=args.font_size,
+        line_height=args.line_height,
+        page_size=args.page_size,
     ))

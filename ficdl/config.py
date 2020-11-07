@@ -28,10 +28,10 @@ _CONFIG_PATH = _get_config_dir().joinpath('config.json')
 
 @dataclasses.dataclass(eq=False)
 class Config:
-    default_type_face: str = 'Verdana'
+    default_font_family: str = 'Verdana'
     default_font_size: str = '14pt'
     default_line_height: str = '1.5'
-    default_pdf_page_size: str = 'A4'
+    default_page_size: str = 'A4'
 
     def save(self):
         with _CONFIG_PATH.open('w', encoding='utf-8') as f:

@@ -27,7 +27,7 @@ def write_pdf(options: WriterOptions):
             pdf_css = Template(
                 pkgutil.get_data('ficdl', 'assets/pdf.css').decode('utf-8')
             ).substitute(
-                type_face=options.type_face,
+                font_family=options.font_family,
                 font_size=options.font_size,
                 line_height=options.line_height,
             )
