@@ -1,5 +1,6 @@
 import dataclasses
 import logging
+import mimetypes
 from pathlib import Path
 from random import uniform
 import tempfile
@@ -31,9 +32,11 @@ def write_story(format: OutputFormat, writer_options: WriterOptions):
         work_dir = Path(work_dir)
         cover_path = writer_options.cover_path
         if cover_path is None and writer_options.metadata.cover_url is not None:
-            cover_path = work_dir.joinpath('cover')
+            image, mime = download_and_decompress(writer_options.metadata.cover_url)
+            suffix = mimetypes.guess_extension(mime)
+            cover_path = work_dir.joinpath('cover').with_suffix(suffix)
             with open(cover_path, 'wb') as f:
-                f.write(download_and_decompress(writer_options.metadata.cover_url))
+                f.write(image)
             writer_options = dataclasses.replace(writer_options, cover_path=cover_path)
 
         get_writer(format)(writer_options)
