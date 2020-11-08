@@ -5,6 +5,7 @@ from string import Template
 import subprocess
 from tempfile import TemporaryDirectory
 
+from ficdl.utils import find_tool
 from ficdl.writers.common import make_html
 from ficdl.writers.types import WriterOptions
 
@@ -36,7 +37,7 @@ def write_pdf(options: WriterOptions):
         html_path.write_text(str(html), encoding='utf-8')
 
         args = [
-            'wkhtmltopdf',
+            str(find_tool('wkhtmltopdf')),
             '--title', metadata.title,
             '--print-media-type',
             '--footer-center', '[page]',
