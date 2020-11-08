@@ -13,6 +13,7 @@ class OutputFormat(enum.Enum):
     tool: Optional[str]
 
     EPUB = ('epub', '.epub', 'pandoc')
+    MOBI = ('mobi', '.mobi', 'kindlegen')
     PDF = ('pdf', '.pdf', 'wkhtmltopdf')
 
     def __new__(cls, value: str, suffix: str, tool: Optional[str]):

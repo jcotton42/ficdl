@@ -87,6 +87,7 @@ class Downloader(tk.Frame):
             initialfile=suggest_name,
             filetypes=(
                 ('ePub (all eReaders *except* Kindle)', '.epub'),
+                ('Mobipocket (all Kindles)', '.mobi'),
                 ('PDF', '.pdf'),
             )
         )
