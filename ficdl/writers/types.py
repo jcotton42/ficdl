@@ -9,8 +9,19 @@ from ficdl.scrapers.types import StoryMetadata
 
 @enum.unique
 class OutputFormat(enum.Enum):
-    EPUB = 'epub'
-    PDF = 'pdf'
+    suffix: str
+    tool: Optional[str]
+
+    EPUB = ('epub', '.epub', 'pandoc')
+    PDF = ('pdf', '.pdf', 'wkhtmltopdf')
+
+    def __new__(cls, value: str, suffix: str, tool: Optional[str]):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        obj.suffix = suffix
+        obj.tool = tool
+
+        return obj
 
 @dataclass(eq=False, frozen=True)
 class WriterOptions:

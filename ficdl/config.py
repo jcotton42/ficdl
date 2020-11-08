@@ -32,6 +32,7 @@ class Config:
     default_font_size: str = '14pt'
     default_line_height: str = '1.5'
     default_page_size: str = 'A4'
+    tool_paths: dict[str, str] = dataclasses.field(default_factory=dict)
 
     def save(self):
         with _CONFIG_PATH.open('w', encoding='utf-8') as f:

@@ -1,12 +1,17 @@
 from gzip import GzipFile
 from io import BytesIO
 import logging
+import os
+from pathlib import Path
 import re
+import shutil
 import sys
 import tkinter as tk
 import tkinter.font as tkfont
 from typing import Optional
 from urllib.request import urlopen
+
+from ficdl.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +32,24 @@ def get_font_families(root: Optional[tk.Misc]) -> list[str]:
     else:
         fonts = sorted(tkfont.families(root))
     return fonts
+
+def find_tool(tool: str) -> Optional[Path]:
+    path = os.environ.get(f'FICDL_TOOL_{tool.upper()}', None)
+
+    if path is not None:
+        return Path(path)
+
+    path = CONFIG.tool_paths.get(tool, None)
+
+    if path is not None:
+        return Path(path)
+
+    path = shutil.which(tool)
+
+    if path is not None:
+        return Path(path)
+    else:
+        return None
 
 def download_and_decompress(url):
     with urlopen(url) as response:
