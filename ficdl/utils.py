@@ -8,7 +8,7 @@ import shutil
 import sys
 import tkinter as tk
 import tkinter.font as tkfont
-from typing import Optional
+from typing import Optional, Tuple
 from urllib.request import urlopen
 
 from ficdl.config import CONFIG
@@ -51,7 +51,7 @@ def find_tool(tool: str) -> Optional[Path]:
     else:
         return None
 
-def download_and_decompress(url):
+def download_and_decompress(url) -> Tuple[bytes, str]:
     with urlopen(url) as response:
         if not 200 <= response.status < 300:
             logger.critical('Failed to download story asset with HTTP status %d', response.status)
@@ -59,10 +59,11 @@ def download_and_decompress(url):
         
         data = response.read()
         is_gzip = response.headers['Content-Encoding'] == 'gzip'
+        mimetype = response.headers['Content-Type']
     
-    return decompress(data, is_gzip)
+    return (decompress(data, is_gzip), mimetype)
 
-def decompress(data, is_gzip):
+def decompress(data, is_gzip) -> bytes:
     if is_gzip:
         buf = BytesIO(data)
         with GzipFile(fileobj=buf) as f:

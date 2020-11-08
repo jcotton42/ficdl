@@ -81,7 +81,8 @@ class FFNScraper(Scraper):
         url = f'{self.base_url}/1/{self.title_from_url}'
 
         if getattr(self, 'first_chapter', None) is None:
-            self.first_chapter = BeautifulSoup(download_and_decompress(url), 'html5lib')
+            page, _mimetype = download_and_decompress(url)
+            self.first_chapter = BeautifulSoup(page, 'html5lib')
 
         title = extract_story_title(self.first_chapter)
         author = extract_story_title(self.first_chapter)
@@ -107,6 +108,7 @@ class FFNScraper(Scraper):
             chapter = self.first_chapter
         else:
             url = f'{self.base_url}/{number}/{self.title_from_url}'
-            chapter = BeautifulSoup(download_and_decompress(url), 'html5lib')
+            page, _mimetype = download_and_decompress(url)
+            chapter = BeautifulSoup(page, 'html5lib')
 
         return extract_text(chapter)
