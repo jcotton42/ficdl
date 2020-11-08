@@ -4,6 +4,7 @@
 
 ### New features
 
+* MOBI output (including Amazon Kindle) support using [Kindle Previewer](https://www.amazon.com/gp/feature.html?docId=1003018611)
 * PDF output support using wkhtmltopdf <https://wkhtmltopdf.org/>.
   * Custom styling (font family, font size, line height, page size)
     * Settable in File > Preferences in the GUI

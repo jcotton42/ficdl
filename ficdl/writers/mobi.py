@@ -31,6 +31,13 @@ def write_mobi(options: WriterOptions):
         # the same directory as the source epub. I wish I was kidding.
         temp_mobi_path = work_dir.joinpath('temp.mobi')
 
-        subprocess.run([kindlegen, epub, '-o', str(temp_mobi_path.name)])
+        process = subprocess.run([kindlegen, epub, '-o', str(temp_mobi_path.name)])
+
+        # return code of 1 means warnings, but book was built
+        if process.returncode not in [0, 1]:
+            raise Exception(
+                f'KindleGen died with exit code {process.returncode}.\n'
+                +'Also tell jcotton42 to get off his butt and do error handling right.'
+            )
 
         temp_mobi_path.replace(options.output_path)
