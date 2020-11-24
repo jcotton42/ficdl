@@ -33,10 +33,16 @@ def write_story(format: OutputFormat, writer_options: WriterOptions):
         cover_path = writer_options.cover_path
         if cover_path is None and writer_options.metadata.cover_url is not None:
             image, mime = download_and_decompress(writer_options.metadata.cover_url)
-            suffix = mimetypes.guess_extension(mime)
-            cover_path = work_dir.joinpath('cover').with_suffix(suffix)
-            with open(cover_path, 'wb') as f:
-                f.write(image)
+
+            if len(image) > 0:
+                # handles the image CDN going down, story text often still works though
+                suffix = mimetypes.guess_extension(mime)
+                cover_path = work_dir.joinpath('cover').with_suffix(suffix)
+                with open(cover_path, 'wb') as f:
+                    f.write(image)
+            else:
+                cover_path = None
+
             writer_options = dataclasses.replace(writer_options, cover_path=cover_path)
 
         get_writer(format)(writer_options)
