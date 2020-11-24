@@ -15,7 +15,7 @@ UPDATE_AVAILABE = '<<UpdateAvailabe>>'
 class Gui(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(f'ficdl v{__version__}')
+        self.title('ficdl')
         self.create_menu()
         self.create_widgets()
         self.bind(UPDATE_AVAILABE, self.show_updater)

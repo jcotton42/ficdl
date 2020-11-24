@@ -1,11 +1,10 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+import webbrowser
 
 from tkinter.scrolledtext import ScrolledText
 
 from ficdl import __version__, __version_info__
-
-import ficdl.updater
 
 class Updater(tk.Toplevel):
     def __init__(self, master, release):
@@ -29,7 +28,7 @@ class Updater(tk.Toplevel):
             release_notes.pack()
 
             button_frame = ttk.Frame(self)
-            ttk.Button(button_frame, text='Update now', command=lambda: self.update_ficdl(release.download_url)).pack(side='right')
+            ttk.Button(button_frame, text='Download now', command=lambda: self.open_update_page(release.download_url)).pack(side='right')
             ttk.Button(button_frame, text='Not now', command=self.destroy).pack(side='right')
             button_frame.pack()
         else:
@@ -38,5 +37,5 @@ class Updater(tk.Toplevel):
             ttk.Label(self, text="You're running the latest version.").pack(anchor='center')
             ttk.Button(self, text='OK', command=self.destroy).pack(anchor='se')
 
-    def update_ficdl(self, url):
-        ficdl.updater.install_update(url, restart_app=True)
+    def open_update_page(self, url):
+        webbrowser.open(url)
