@@ -1,6 +1,5 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-import tkinter.filedialog as filedialog
 
 class Converter(tk.Frame):
     def __init__(self, master, window):

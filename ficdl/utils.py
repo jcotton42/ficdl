@@ -1,33 +1,57 @@
-from datetime import datetime
 from gzip import GzipFile
 from io import BytesIO
-from typing import Iterable, Iterator, List
+import logging
+import os
+from pathlib import Path
+import re
+import shutil
+import sys
+import tkinter as tk
+import tkinter.font as tkfont
+from typing import Optional, Tuple
 from urllib.request import urlopen
 
-import logging
-import sys
+from ficdl.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
-class StoryData:
-    title: str
-    author: str
-    cover_url: str
-    chapter_names: Iterable[str]
-    chapter_text: Iterable[List]
-    description: str
-    date_utc: datetime
+INVALID_PATH_CHARS = re.compile(r'[<>:"/\\|?*]')
+INVALID_PATH = re.compile(r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])$', re.IGNORECASE)
 
-    def __init__(self, title, author, cover_url, chapter_names, chapter_text, description, date_utc):
-        self.title = title
-        self.author = author
-        self.cover_url = cover_url
-        self.chapter_names = chapter_names
-        self.chapter_text = chapter_text
-        self.description = description
-        self.date_utc = date_utc
+def make_path_safe(stem: str) -> str:
+    if INVALID_PATH.match(stem):
+        return stem + '_'
+    else:
+        return INVALID_PATH_CHARS.sub('_', stem)
 
-def download_and_decompress(url):
+def get_font_families(root: Optional[tk.Misc]) -> list[str]:
+    if root is None:
+        root = tk.Tk()
+        fonts = sorted(tkfont.families(root))
+        root.destroy()
+    else:
+        fonts = sorted(tkfont.families(root))
+    return fonts
+
+def find_tool(tool: str) -> Optional[Path]:
+    path = os.environ.get(f'FICDL_TOOL_{tool.upper()}', None)
+
+    if path is not None:
+        return Path(path)
+
+    path = CONFIG.tool_paths.get(tool, None)
+
+    if path is not None:
+        return Path(path)
+
+    path = shutil.which(tool)
+
+    if path is not None:
+        return Path(path)
+    else:
+        return None
+
+def download_and_decompress(url) -> Tuple[bytes, str]:
     with urlopen(url) as response:
         if not 200 <= response.status < 300:
             logger.critical('Failed to download story asset with HTTP status %d', response.status)
@@ -35,10 +59,11 @@ def download_and_decompress(url):
         
         data = response.read()
         is_gzip = response.headers['Content-Encoding'] == 'gzip'
+        mimetype = response.headers['Content-Type']
     
-    return decompress(data, is_gzip)
+    return (decompress(data, is_gzip), mimetype)
 
-def decompress(data, is_gzip):
+def decompress(data, is_gzip) -> bytes:
     if is_gzip:
         buf = BytesIO(data)
         with GzipFile(fileobj=buf) as f:

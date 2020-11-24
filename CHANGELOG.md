@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.8.0
+
+### New features
+
+* MOBI output (including Amazon Kindle) support using [Kindle Previewer](https://www.amazon.com/gp/feature.html?docId=1003018611)
+* PDF output support using wkhtmltopdf <https://wkhtmltopdf.org/>.
+  * Custom styling (font family, font size, line height, page size)
+    * Settable in File > Preferences in the GUI
+    * Via options on the command line
+* The downloader GUI will now suggest naming the story file after the story's title.
+* The CLI will infer the filename of the eBook from the title as well if not given.
+
 ## v1.7.0
 
 ### New features
