@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.8.1
+
+* Downloading covers from FFN works again.
+
 ## v1.8.0
 
 ### New features

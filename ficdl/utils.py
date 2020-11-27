@@ -9,7 +9,7 @@ import sys
 import tkinter as tk
 import tkinter.font as tkfont
 from typing import Optional, Tuple
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from ficdl.config import CONFIG
 
@@ -51,8 +51,15 @@ def find_tool(tool: str) -> Optional[Path]:
     else:
         return None
 
-def download_and_decompress(url) -> Tuple[bytes, str]:
-    with urlopen(url) as response:
+def download_and_decompress(url, headers=None) -> Tuple[bytes, str]:
+    if headers is None:
+        headers = {}
+
+    req = Request(url)
+    for key, value in headers.items():
+        req.add_header(key, value)
+
+    with urlopen(req) as response:
         if not 200 <= response.status < 300:
             logger.critical('Failed to download story asset with HTTP status %d', response.status)
             sys.exit(2) # FIXME, should raise instead

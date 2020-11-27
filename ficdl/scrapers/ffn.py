@@ -69,6 +69,11 @@ def extract_update_date_utc(page: BeautifulSoup) -> datetime:
     # update date is either by itself, or the first date
     return datetime.fromtimestamp(int(page.select('#profile_top span[data-xutime]')[0]['data-xutime']), timezone.utc)
 
+DEFAULT_HEADERS = {
+    'Referer': 'https://www.fanfiction.net/',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47',
+}
+
 class FFNScraper(Scraper):
     base_url: str
     title_from_url: str
@@ -81,7 +86,7 @@ class FFNScraper(Scraper):
         url = f'{self.base_url}/1/{self.title_from_url}'
 
         if getattr(self, 'first_chapter', None) is None:
-            page, _mimetype = download_and_decompress(url)
+            page, _mimetype = download_and_decompress(url, headers=DEFAULT_HEADERS)
             self.first_chapter = BeautifulSoup(page, 'html5lib')
 
         title = extract_story_title(self.first_chapter)
@@ -108,7 +113,7 @@ class FFNScraper(Scraper):
             chapter = self.first_chapter
         else:
             url = f'{self.base_url}/{number}/{self.title_from_url}'
-            page, _mimetype = download_and_decompress(url)
+            page, _mimetype = download_and_decompress(url, headers=DEFAULT_HEADERS)
             chapter = BeautifulSoup(page, 'html5lib')
 
         return extract_text(chapter)
