@@ -1,5 +1,6 @@
 using AngleSharp;
 using AngleSharp.Dom;
+using AngleSharp.Io;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -22,16 +23,17 @@ namespace FicDl.Scrapers {
         }
 
         public async Task<StroyMetadata> GetMetadataAsync(CancellationToken cancellationToken) {
-            var page = await context.OpenAsync($"{this.baseUrl}/1/{this.titleFromUrl}", cancellationToken);
+            var url = $"{this.baseUrl}/1/{this.titleFromUrl}";
+            var page = await context.OpenAsync(CreateGetRequest(url), cancellationToken);
             this.firstChapter = page;
 
-            var title = this.GetTitle(page);
-            var author = this.GetAuthor(page);
-            var coverUri = this.GetCoverUri(page);
-            var coverThumbnailUri = this.GetCoverThumbnailUri(page);
-            var chapterNames = this.GetChapterNames(page) ?? new[]{title};
-            var description = this.GetDescription(page);
-            var updateDate = this.GetUpdateDate(page);
+            var title = this.ExtractTitle(page);
+            var author = this.ExtractAuthor(page);
+            var coverUri = this.ExtractCoverUri(page);
+            var coverThumbnailUri = this.ExtractCoverThumbnailUri(page);
+            var chapterNames = this.ExtractChapterNames(page) ?? new[]{title};
+            var description = this.ExtractDescription(page);
+            var updateDate = this.ExtractUpdateDate(page);
 
             return new StroyMetadata(
                 title,
@@ -46,17 +48,24 @@ namespace FicDl.Scrapers {
 
         // DownloadCoverAsync
         // necessary b/c e.g. FFN needs Referer headers, otherwise the scrape is blocked
+        // AngleSharp can't set that header right now, might need to use HttpClient directly
 
         public async Task<IDocument> GetChapterTextAsync(int number, CancellationToken cancellationToken) {
             if(number == 1 && this.firstChapter is not null) {
-                return await this.GetChapterText(this.firstChapter);
+                return await this.ExtractTextAsync(this.firstChapter);
             }
 
-            var page = await this.context.OpenAsync($"{this.baseUrl}/{number}/{this.titleFromUrl}", cancellationToken);
-            return await this.GetChapterText(page);
+            var page = await this.context.OpenAsync(CreateGetRequest($"{this.baseUrl}/{number}/{this.titleFromUrl}"), cancellationToken);
+            return await this.ExtractTextAsync(page);
         }
 
-        private async Task<IDocument> GetChapterText(IDocument page) {
+        /// Workaround for AngleSharp bug (https://github.com/AngleSharp/AngleSharp/issues/920)
+        /// where setting Referer on the DefaultRequester isn't passed through
+        private static DocumentRequest CreateGetRequest(string uri) {
+            return DocumentRequest.Get(new Url(uri), referer: "https://www.fanfiction.net/");
+        }
+
+        private async Task<IDocument> ExtractTextAsync(IDocument page) {
             var text = await context.OpenNewAsync();
 
             var body = text.QuerySelector("body");
@@ -100,15 +109,15 @@ namespace FicDl.Scrapers {
             }
         }
 
-        private string GetTitle(IDocument page) {
+        private string ExtractTitle(IDocument page) {
             return page.QuerySelector("#profile_top > b").Text();
         }
 
-        private string GetAuthor(IDocument page) {
+        private string ExtractAuthor(IDocument page) {
             return page.QuerySelector("#profile_top > a").Text();
         }
 
-        private IReadOnlyList<string>? GetChapterNames(IDocument page) {
+        private IReadOnlyList<string>? ExtractChapterNames(IDocument page) {
             var dropdown = page.QuerySelector("#chap_select");
             if(dropdown is null) {
                 // single-chapter story
@@ -124,7 +133,7 @@ namespace FicDl.Scrapers {
             return chapters.AsReadOnly();
         }
 
-        private Uri? GetCoverUri(IDocument page) {
+        private Uri? ExtractCoverUri(IDocument page) {
             var cover = page.QuerySelector(".cimage[data-original]");
             if(cover is null) {
                 return null;
@@ -137,7 +146,7 @@ namespace FicDl.Scrapers {
             return new Uri(uri);
         }
 
-        private Uri? GetCoverThumbnailUri(IDocument page) {
+        private Uri? ExtractCoverThumbnailUri(IDocument page) {
             var cover = page.QuerySelector(".cimage:not([data-original])");
             if(cover is null) {
                 return null;
@@ -150,11 +159,11 @@ namespace FicDl.Scrapers {
             return new Uri(uri);
         }
 
-        private string GetDescription(IDocument page) {
+        private string ExtractDescription(IDocument page) {
             return page.QuerySelector("#profile_top > div").Text();
         }
 
-        private DateTimeOffset GetUpdateDate(IDocument page) {
+        private DateTimeOffset ExtractUpdateDate(IDocument page) {
             return DateTimeOffset.FromUnixTimeSeconds(
                 long.Parse(page.QuerySelector("#profile_top span[data-xutime]").GetAttribute("data-xutime"))
             );
