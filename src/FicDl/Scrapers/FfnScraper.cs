@@ -81,6 +81,13 @@ namespace FicDl.Scrapers {
                     newP.AppendChild(child.Clone());
                 }
 
+                foreach(var span in newP.QuerySelectorAll("span")) {
+                    if(span.HasAttribute("style") && UnderlineStyle.IsMatch(span.GetAttribute("style"))) {
+                        span.ClassList.Add("underline");
+                        span.RemoveAttribute("style");
+                    }
+                }
+
                 if(p.HasAttribute("style") && CenterStyle.IsMatch(p.GetAttribute("style"))) {
                     var div = text.CreateElement("div");
                     div.ClassList.Add("center");
