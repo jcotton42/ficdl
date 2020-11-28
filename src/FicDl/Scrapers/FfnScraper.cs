@@ -2,11 +2,14 @@ using AngleSharp;
 using AngleSharp.Dom;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace FicDl.Scrapers {
     public class FfnScraper {
+        private static readonly Regex CenterStyle = new Regex(@"text-align\s*:\s*center", RegexOptions.IgnoreCase);
+        private static readonly Regex UnderlineStyle = new Regex(@"text-decoration\s*:\s*underline", RegexOptions.IgnoreCase);
         private readonly IBrowsingContext context;
         private string baseUrl;
         private string titleFromUrl;
@@ -39,6 +42,55 @@ namespace FicDl.Scrapers {
                 description,
                 updateDate
             );
+        }
+
+        // DownloadCoverAsync
+        // necessary b/c e.g. FFN needs Referer headers, otherwise the scrape is blocked
+
+        public async Task<IDocument> GetChapterTextAsync(int number, CancellationToken cancellationToken) {
+            if(number == 1 && this.firstChapter is not null) {
+                return await this.GetChapterText(this.firstChapter);
+            }
+
+            var page = await this.context.OpenAsync($"{this.baseUrl}/{number}/{this.titleFromUrl}", cancellationToken);
+            return await this.GetChapterText(page);
+        }
+
+        private async Task<IDocument> GetChapterText(IDocument page) {
+            var text = await context.OpenNewAsync();
+
+            var body = text.QuerySelector("body");
+            foreach(var child in page.QuerySelector("#storytext").ChildNodes) {
+                if(child is IElement elem) {
+                    if(elem.TagName == "P") {
+                        body.AppendChild(ProcessParagraph(elem));
+                    } else {
+                        body.AppendChild(elem.Clone());
+                    }
+                } else {
+                    body.AppendChild(child.Clone());
+                }
+            }
+
+            return text;
+
+            IElement ProcessParagraph(IElement p) {
+                var newP = text.CreateElement("p");
+
+                foreach(var child in p.ChildNodes) {
+                    newP.AppendChild(child.Clone());
+                }
+
+                if(p.HasAttribute("style") && CenterStyle.IsMatch(p.GetAttribute("style"))) {
+                    var div = text.CreateElement("div");
+                    div.ClassList.Add("center");
+                    div.AppendChild(newP);
+
+                    return div;
+                } else {
+                    return newP;
+                }
+            }
         }
 
         private string GetTitle(IDocument page) {

@@ -5,9 +5,11 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <RootNamespace>FicDl</RootNamespace>
     <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="0.14.0" />
     <PackageReference Include="Stylet" Version="1.3.4.0" />
   </ItemGroup>
 
