@@ -3,6 +3,8 @@ using AngleSharp.Dom;
 using AngleSharp.Io;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,10 +13,24 @@ namespace FicDl.Scrapers {
     public class FfnScraper {
         private static readonly Regex CenterStyle = new Regex(@"text-align\s*:\s*center", RegexOptions.IgnoreCase);
         private static readonly Regex UnderlineStyle = new Regex(@"text-decoration\s*:\s*underline", RegexOptions.IgnoreCase);
+        private static readonly HttpClient httpClient;
         private readonly IBrowsingContext context;
         private string baseUrl;
         private string titleFromUrl;
         private IDocument? firstChapter;
+
+        static FfnScraper() {
+            var handler = new HttpClientHandler() {
+                AllowAutoRedirect = true,
+                AutomaticDecompression = DecompressionMethods.All,
+            };
+            var client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Add("Referer", "https://www.fanfiction.net/");
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47");
+            
+            FfnScraper.httpClient = client;
+        }
 
         public FfnScraper(IBrowsingContext context, Uri uri) {
             this.context = context;
@@ -46,9 +62,9 @@ namespace FicDl.Scrapers {
             );
         }
 
-        // DownloadCoverAsync
-        // necessary b/c e.g. FFN needs Referer headers, otherwise the scrape is blocked
-        // AngleSharp can't set that header right now, might need to use HttpClient directly
+        public Task<HttpResponseMessage> GetResourceAsync(Uri uri, CancellationToken cancellationToken) {
+            return httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        }
 
         public async Task<IDocument> GetChapterTextAsync(int number, CancellationToken cancellationToken) {
             if(number == 1 && this.firstChapter is not null) {
