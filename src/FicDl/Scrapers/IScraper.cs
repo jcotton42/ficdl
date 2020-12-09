@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 
 namespace FicDl.Scrapers {
-    public record StroyMetadata(
+    public record StoryMetadata(
         string Title,
         string Author,
-        Uri? CoverUri,
-        Uri? CoverThumbnailUri,
+        bool HasCover,
         IReadOnlyList<string> ChapterNames,
         string Description,
         DateTimeOffset UpdateDateUtc

@@ -3,8 +3,6 @@ using AngleSharp.Dom;
 using AngleSharp.Io;
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,24 +11,11 @@ namespace FicDl.Scrapers {
     public class FfnScraper {
         private static readonly Regex CenterStyle = new Regex(@"text-align\s*:\s*center", RegexOptions.IgnoreCase);
         private static readonly Regex UnderlineStyle = new Regex(@"text-decoration\s*:\s*underline", RegexOptions.IgnoreCase);
-        private static readonly HttpClient httpClient;
-        private readonly IBrowsingContext context;
-        private string baseUrl;
-        private string titleFromUrl;
-        private IDocument? firstChapter;
 
-        static FfnScraper() {
-            var handler = new HttpClientHandler() {
-                AllowAutoRedirect = true,
-                AutomaticDecompression = DecompressionMethods.All,
-            };
-            var client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add("Referer", "https://www.fanfiction.net/");
-            client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47");
-            
-            FfnScraper.httpClient = client;
-        }
+        private readonly IBrowsingContext context;
+        private readonly string baseUrl;
+        private readonly string titleFromUrl;
+        private IDocument? firstChapter;
 
         public FfnScraper(IBrowsingContext context, Uri uri) {
             this.context = context;
@@ -38,51 +23,58 @@ namespace FicDl.Scrapers {
             this.baseUrl = $"https://{uri.Host}/{uri.Segments[1]}{uri.Segments[2]}".TrimEnd('/');
         }
 
-        public async Task<StroyMetadata> GetMetadataAsync(CancellationToken cancellationToken) {
-            var url = $"{this.baseUrl}/1/{this.titleFromUrl}";
-            var page = await context.OpenAsync(CreateGetRequest(url), cancellationToken);
-            this.firstChapter = page;
+        public async Task<StoryMetadata> GetMetadataAsync(CancellationToken cancellationToken) {
+            IDocument page;
+            if(this.firstChapter is null) {
+                var url = $"{this.baseUrl}/1/{this.titleFromUrl}";
+                page = await context.OpenAsync(url, cancellationToken).ConfigureAwait(false);
+                context.NavigateTo(page);
+                this.firstChapter = page;
+            } else {
+                page = this.firstChapter;
+            }
 
             var title = this.ExtractTitle(page);
             var author = this.ExtractAuthor(page);
-            var coverUri = this.ExtractCoverUri(page);
-            var coverThumbnailUri = this.ExtractCoverThumbnailUri(page);
+            var hasCover = this.ExtractCoverUri(page) is not null;
             var chapterNames = this.ExtractChapterNames(page) ?? new[]{title};
             var description = this.ExtractDescription(page);
             var updateDate = this.ExtractUpdateDate(page);
 
-            return new StroyMetadata(
+            return new StoryMetadata(
                 title,
                 author,
-                coverUri,
-                coverThumbnailUri,
+                hasCover,
                 chapterNames,
                 description,
                 updateDate
             );
         }
 
-        public Task<HttpResponseMessage> GetResourceAsync(Uri uri, CancellationToken cancellationToken) {
-            return httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        }
-
         public async Task<IDocument> GetChapterTextAsync(int number, CancellationToken cancellationToken) {
             if(number == 1 && this.firstChapter is not null) {
-                return await this.ExtractTextAsync(this.firstChapter);
+                return await this.ExtractTextAsync(this.firstChapter).ConfigureAwait(false);
             }
 
-            var page = await this.context.OpenAsync(CreateGetRequest($"{this.baseUrl}/{number}/{this.titleFromUrl}"), cancellationToken);
-            return await this.ExtractTextAsync(page);
+            var page = await this.context.OpenAsync($"{this.baseUrl}/{number}/{this.titleFromUrl}", cancellationToken).ConfigureAwait(false);
+            context.NavigateTo(page);
+            return await this.ExtractTextAsync(page).ConfigureAwait(false);
         }
 
-        /// Workaround for AngleSharp bug (https://github.com/AngleSharp/AngleSharp/issues/920)
-        /// where setting Referer on the DefaultRequester isn't passed through
-        private static DocumentRequest CreateGetRequest(string uri) {
-            return DocumentRequest.Get(new Url(uri), referer: "https://www.fanfiction.net/");
+        public async Task<IResponse> GetCoverAsync(CancellationToken cancellationToken) {
+            var resourceLoader = context.GetService<IResourceLoader>()
+                ?? throw new InvalidOperationException("Browsing context was not configured with a resource loader.");
+
+            var (coverUri, coverElem) = this.ExtractCoverUri(this.firstChapter)
+                ?? throw new InvalidOperationException("Attempted cover download for story with no cover.");
+
+            var download = resourceLoader.FetchAsync(new ResourceRequest(coverElem, new Url(coverUri)));
+            using var cancelRegistration = cancellationToken.Register(download.Cancel);
+            return await download.Task.ConfigureAwait(false);
         }
 
         private async Task<IDocument> ExtractTextAsync(IDocument page) {
-            var text = await context.OpenNewAsync();
+            var text = await context.OpenNewAsync().ConfigureAwait(false);
 
             var body = text.QuerySelector("body");
             foreach(var child in page.QuerySelector("#storytext").ChildNodes) {
@@ -149,30 +141,17 @@ namespace FicDl.Scrapers {
             return chapters.AsReadOnly();
         }
 
-        private Uri? ExtractCoverUri(IDocument page) {
-            var cover = page.QuerySelector(".cimage[data-original]");
-            if(cover is null) {
+        private (string, IElement)? ExtractCoverUri(IDocument page) {
+            var coverElem = page.QuerySelector(".cimage[data-original]");
+            if(coverElem is null) {
                 return null;
             }
 
-            var uri = cover.GetAttribute("data-original");
+            var uri = coverElem.GetAttribute("data-original");
             if(uri.StartsWith("//")) {
-                return new Uri("https:" + uri);
+                return ("https:" + uri, coverElem);
             }
-            return new Uri(uri);
-        }
-
-        private Uri? ExtractCoverThumbnailUri(IDocument page) {
-            var cover = page.QuerySelector(".cimage:not([data-original])");
-            if(cover is null) {
-                return null;
-            }
-
-            var uri = cover.GetAttribute("src");
-            if(uri.StartsWith("//")) {
-                return new Uri("http:" + uri);
-            }
-            return new Uri(uri);
+            return (uri, coverElem);
         }
 
         private string ExtractDescription(IDocument page) {
