@@ -10,15 +10,15 @@ using System.Threading.Tasks;
 
 namespace FicDl.Writers {
     public class EpubWriter {
-        private readonly IBrowsingContext context;
-        private readonly ILogger logger;
+        private readonly IBrowsingContext _context;
+        private readonly ILogger _logger;
 
         public string Extension => ".epub";
         public string Description => "ePub";
 
         public EpubWriter(IBrowsingContext context, ILogger logger) {
-            this.context = context;
-            this.logger = logger;
+            _context = context;
+            _logger = logger;
         }
 
         //public string? GetToolPath() {
@@ -28,7 +28,7 @@ namespace FicDl.Writers {
         //}
 
         public async Task WriteAsync(WriterOptions options, CancellationToken cancellationToken) {
-            var doc = await context.OpenNewAsync(cancellation: cancellationToken);
+            var doc = await _context.OpenNewAsync(cancellation: cancellationToken);
             var body = doc.GetElementsByTagName("body")[0];
 
             foreach(var (title, text) in options.Chapters) {
@@ -69,7 +69,7 @@ namespace FicDl.Writers {
                 StartInfo = startInfo
             };
 
-            process.ErrorDataReceived += (_, args) => this.logger.Information(args.Data);
+            process.ErrorDataReceived += (_, args) => _logger.Information(args.Data);
 
             process.Start();
             process.BeginErrorReadLine();
@@ -88,7 +88,7 @@ namespace FicDl.Writers {
                     // process already exited, just ignore it
                 }
                 File.Delete(options.OutputPath);
-                this.logger.Information("Write to {OutputPath} canceled.", options.OutputPath);
+                _logger.Information("Write to {OutputPath} canceled.", options.OutputPath);
                 throw;
             }
         }

@@ -5,7 +5,7 @@ namespace FicDl.Pages {
         public DownloadViewModel DownloadView { get; }
 
         public ShellViewModel(DownloadViewModel downloadViewModel) {
-            this.DownloadView = downloadViewModel;
+            DownloadView = downloadViewModel;
         }
     }
 }

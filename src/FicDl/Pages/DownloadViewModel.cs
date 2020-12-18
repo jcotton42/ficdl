@@ -10,28 +10,28 @@ using System.Windows;
 
 namespace FicDl.Pages {
     public class DownloadViewModel : Screen {
-        private string? coverPath;
-        private int currentChapterNumber = 2;
-        private int chapterCount = 3;
-        private bool canDownload = true;
-        private readonly IWindowManager windowManager;
+        private string? _coverPath;
+        private int _currentChapterNumber = 2;
+        private int _chapterCount = 3;
+        private bool _canDownload = true;
+        private readonly IWindowManager _windowManager;
 
         public string? Url { get; set; }
         public string? CoverPath {
-            get => this.coverPath;
-            set => this.SetAndNotify(ref this.coverPath, value);
+            get => _coverPath;
+            set => SetAndNotify(ref _coverPath, value);
         }
         public int CurrentChapterNumber {
-            get => this.currentChapterNumber;
-            set => this.SetAndNotify(ref this.currentChapterNumber, value);
+            get => _currentChapterNumber;
+            set => SetAndNotify(ref _currentChapterNumber, value);
         }
         public int ChapterCount {
-            get => this.chapterCount;
-            set => this.SetAndNotify(ref this.chapterCount, value);
+            get => _chapterCount;
+            set => SetAndNotify(ref _chapterCount, value);
         }
 
         public DownloadViewModel(IWindowManager windowManager) {
-            this.windowManager = windowManager;
+            _windowManager = windowManager;
         }
 
         public void BrowseForCover() {
@@ -43,17 +43,17 @@ namespace FicDl.Pages {
             };
 
             if(dlg.ShowDialog() == true) {
-                this.CoverPath = dlg.FileName;
+                CoverPath = dlg.FileName;
             }
         }
 
         public bool CanDownload {
-            get => this.canDownload;
-            set => this.SetAndNotify(ref this.canDownload, value);
+            get => _canDownload;
+            set => SetAndNotify(ref _canDownload, value);
         }
-        public async void Download() {
-            var downloader = new DownloadProgressViewModel(this.Url);
-            this.windowManager.ShowDialog(downloader);
+        public void Download() {
+            var downloader = new DownloadProgressViewModel(Url);
+            _windowManager.ShowDialog(downloader);
         }
     }
 }

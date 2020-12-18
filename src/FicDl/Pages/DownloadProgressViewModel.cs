@@ -2,61 +2,57 @@
 using AngleSharp.Io;
 using AngleSharp.Io.Network;
 using FicDl.Scrapers;
-using FicDl.Writers;
 using Stylet;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace FicDl.Pages {
     public class DownloadProgressViewModel : Screen {
-        private readonly CancellationTokenSource cancelSource;
-        private readonly string uri;
-        private string storyTitle;
-        private string storyAuthor;
-        private int currentChapterNumber;
-        private int chapterCount;
-        private string currentChapterTitle;
-        private bool isIndeterminate;
+        private readonly CancellationTokenSource _cancelSource;
+        private readonly string _uri;
+        private string _storyTitle;
+        private string _storyAuthor;
+        private int _currentChapterNumber;
+        private int _chapterCount;
+        private string _currentChapterTitle;
+        private bool _isIndeterminate;
 
         public string StoryTitle {
-            get => this.storyTitle;
-            set => this.SetAndNotify(ref this.storyTitle, value);
+            get => _storyTitle;
+            set => SetAndNotify(ref _storyTitle, value);
         }
         public string StoryAuthor {
-            get => this.storyAuthor;
-            set => this.SetAndNotify(ref this.storyAuthor, value);
+            get => _storyAuthor;
+            set => SetAndNotify(ref _storyAuthor, value);
         }
         public int CurrentChapterNumber {
-            get => this.currentChapterNumber;
-            set => this.SetAndNotify(ref this.currentChapterNumber, value);
+            get => _currentChapterNumber;
+            set => SetAndNotify(ref _currentChapterNumber, value);
         }
         public int ChapterCount {
-            get => this.chapterCount;
-            set => this.SetAndNotify(ref this.chapterCount, value);
+            get => _chapterCount;
+            set => SetAndNotify(ref _chapterCount, value);
         }
         public string CurrentChapterTitle {
-            get => this.currentChapterTitle;
-            set => this.SetAndNotify(ref this.currentChapterTitle, value);
+            get => _currentChapterTitle;
+            set => SetAndNotify(ref _currentChapterTitle, value);
         }
         public bool IsIndeterminate {
-            get => this.isIndeterminate;
-            set => this.SetAndNotify(ref this.isIndeterminate, value);
+            get => _isIndeterminate;
+            set => SetAndNotify(ref _isIndeterminate, value);
         }
 
         public DownloadProgressViewModel(string uri) {
-            this.cancelSource = new CancellationTokenSource();
-            this.uri = uri;
+            _cancelSource = new CancellationTokenSource();
+            _uri = uri;
         }
 
         public void CancelDownload() {
-            this.cancelSource.Cancel();
+            _cancelSource.Cancel();
         }
 
         private async void DownloadStory() {
@@ -68,8 +64,8 @@ namespace FicDl.Pages {
                     IsResourceLoadingEnabled = true
                 });
 
-            var scraper = new FfnScraper(BrowsingContext.New(config), new Uri(uri));
-            var metadata = await scraper.GetMetadataAsync(this.cancelSource.Token);
+            var scraper = new FfnScraper(BrowsingContext.New(config), new Uri(_uri));
+            var metadata = await scraper.GetMetadataAsync(_cancelSource.Token);
 
             StoryTitle = metadata.Title;
             StoryAuthor = metadata.Author;
@@ -80,8 +76,8 @@ namespace FicDl.Pages {
             foreach(var chapterName in metadata.ChapterNames) {
                 CurrentChapterNumber++;
                 CurrentChapterTitle = chapterName;
-                await Task.Delay(TimeSpan.FromMilliseconds(rand.Next(500, 1250)), this.cancelSource.Token);
-                using var text = await scraper.GetChapterTextAsync(CurrentChapterNumber, this.cancelSource.Token);
+                await Task.Delay(TimeSpan.FromMilliseconds(rand.Next(500, 1250)), _cancelSource.Token);
+                using var text = await scraper.GetChapterTextAsync(CurrentChapterNumber, _cancelSource.Token);
                 await using var file = File.CreateText(
                     Path.Combine("C:/Users/Joshua/apptest", $"{CurrentChapterNumber} - {chapterName}.html")
                 );
@@ -90,7 +86,7 @@ namespace FicDl.Pages {
 
             if(metadata.HasCover) {
                 Debug.WriteLine("Story has a cover.");
-                using var response = await scraper.GetCoverAsync(this.cancelSource.Token);
+                using var response = await scraper.GetCoverAsync(_cancelSource.Token);
                 Debug.WriteLine("Content type: {0}", response.GetContentType());
                 await using var file = File.Create(
                     $"C:/Users/Joshua/apptest/cover{response.GetContentType().Suffix}",
@@ -100,11 +96,11 @@ namespace FicDl.Pages {
                 await response.Content.CopyToAsync(file);
             }
             
-            this.RequestClose(true);
+            RequestClose(true);
         }
 
         protected override void OnInitialActivate() {
-            this.DownloadStory();
+            DownloadStory();
         }
     }
 }

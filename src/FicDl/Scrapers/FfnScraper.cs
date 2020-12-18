@@ -12,34 +12,34 @@ namespace FicDl.Scrapers {
         private static readonly Regex CenterStyle = new Regex(@"text-align\s*:\s*center", RegexOptions.IgnoreCase);
         private static readonly Regex UnderlineStyle = new Regex(@"text-decoration\s*:\s*underline", RegexOptions.IgnoreCase);
 
-        private readonly IBrowsingContext context;
-        private readonly string baseUrl;
-        private readonly string titleFromUrl;
-        private IDocument? firstChapter;
+        private readonly IBrowsingContext _context;
+        private readonly string _baseUrl;
+        private readonly string _titleFromUrl;
+        private IDocument? _firstChapter;
 
         public FfnScraper(IBrowsingContext context, Uri uri) {
-            this.context = context;
-            this.titleFromUrl = uri.Segments[^1];
-            this.baseUrl = $"https://{uri.Host}/{uri.Segments[1]}{uri.Segments[2]}".TrimEnd('/');
+            _context = context;
+            _titleFromUrl = uri.Segments[^1];
+            _baseUrl = $"https://{uri.Host}/{uri.Segments[1]}{uri.Segments[2]}".TrimEnd('/');
         }
 
         public async Task<StoryMetadata> GetMetadataAsync(CancellationToken cancellationToken) {
             IDocument page;
-            if(this.firstChapter is null) {
-                var url = $"{this.baseUrl}/1/{this.titleFromUrl}";
-                page = await context.OpenAsync(url, cancellationToken).ConfigureAwait(false);
-                context.NavigateTo(page);
-                this.firstChapter = page;
+            if(_firstChapter is null) {
+                var url = $"{_baseUrl}/1/{_titleFromUrl}";
+                page = await _context.OpenAsync(url, cancellationToken).ConfigureAwait(false);
+                _context.NavigateTo(page);
+                _firstChapter = page;
             } else {
-                page = this.firstChapter;
+                page = _firstChapter;
             }
 
-            var title = this.ExtractTitle(page);
-            var author = this.ExtractAuthor(page);
-            var hasCover = this.ExtractCoverUri(page) is not null;
-            var chapterNames = this.ExtractChapterNames(page) ?? new[]{title};
-            var description = this.ExtractDescription(page);
-            var updateDate = this.ExtractUpdateDate(page);
+            var title = ExtractTitle(page);
+            var author = ExtractAuthor(page);
+            var hasCover = ExtractCoverUri(page) is not null;
+            var chapterNames = ExtractChapterNames(page) ?? new[]{title};
+            var description = ExtractDescription(page);
+            var updateDate = ExtractUpdateDate(page);
 
             return new StoryMetadata(
                 title,
@@ -52,20 +52,20 @@ namespace FicDl.Scrapers {
         }
 
         public async Task<IDocument> GetChapterTextAsync(int number, CancellationToken cancellationToken) {
-            if(number == 1 && this.firstChapter is not null) {
-                return await this.ExtractTextAsync(this.firstChapter).ConfigureAwait(false);
+            if(number == 1 && _firstChapter is not null) {
+                return await ExtractTextAsync(_firstChapter).ConfigureAwait(false);
             }
 
-            var page = await this.context.OpenAsync($"{this.baseUrl}/{number}/{this.titleFromUrl}", cancellationToken).ConfigureAwait(false);
-            context.NavigateTo(page);
-            return await this.ExtractTextAsync(page).ConfigureAwait(false);
+            var page = await _context.OpenAsync($"{_baseUrl}/{number}/{_titleFromUrl}", cancellationToken).ConfigureAwait(false);
+            _context.NavigateTo(page);
+            return await ExtractTextAsync(page).ConfigureAwait(false);
         }
 
         public async Task<IResponse> GetCoverAsync(CancellationToken cancellationToken) {
-            var resourceLoader = context.GetService<IResourceLoader>()
+            var resourceLoader = _context.GetService<IResourceLoader>()
                 ?? throw new InvalidOperationException("Browsing context was not configured with a resource loader.");
 
-            var (coverUri, coverElem) = this.ExtractCoverUri(this.firstChapter)
+            var (coverUri, coverElem) = ExtractCoverUri(_firstChapter)
                 ?? throw new InvalidOperationException("Attempted cover download for story with no cover.");
 
             var download = resourceLoader.FetchAsync(new ResourceRequest(coverElem, new Url(coverUri)));
@@ -74,7 +74,7 @@ namespace FicDl.Scrapers {
         }
 
         private async Task<IDocument> ExtractTextAsync(IDocument page) {
-            var text = await context.OpenNewAsync().ConfigureAwait(false);
+            var text = await _context.OpenNewAsync().ConfigureAwait(false);
 
             var body = text.QuerySelector("body");
             foreach(var child in page.QuerySelector("#storytext").ChildNodes) {
@@ -165,7 +165,7 @@ namespace FicDl.Scrapers {
         }
 
         public override string ToString() {
-            return $"FfnScraper({this.baseUrl}/1/{this.titleFromUrl})";
+            return $"FfnScraper({_baseUrl}/1/{_titleFromUrl})";
         }
     }
 }

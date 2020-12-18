@@ -6,8 +6,8 @@ namespace FicDl {
     /// Creates a temporary directory, deletes it when disposed.
     /// </summary>
     public sealed class TemporaryDirectory : IDisposable {
-        private bool disposed;
-        private readonly string path;
+        private bool _disposed;
+        private readonly string _path;
 
         /// <summary>
         /// The path to the temporary directory.
@@ -17,25 +17,25 @@ namespace FicDl {
         /// </exception>
         public string Path {
             get {
-                if(this.disposed) {
+                if(_disposed) {
                     throw new ObjectDisposedException("this");
                 }
-                return this.path;
+                return _path;
             }
         }
 
         public TemporaryDirectory() {
-            this.path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
-            Directory.CreateDirectory(this.Path);
+            _path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+            Directory.CreateDirectory(Path);
         }
 
         /// <summary>
         /// Deletes the temporary directory.
         /// </summary>
         public void Dispose() {
-            if(!this.disposed) {
-                this.disposed = true;
-                Directory.Delete(this.path, recursive: true);
+            if(!_disposed) {
+                _disposed = true;
+                Directory.Delete(_path, recursive: true);
             }
         }
     }
