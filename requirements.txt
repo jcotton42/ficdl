@@ -1,4 +1,0 @@
-beautifulsoup4==4.9.3
-pypandoc==1.5
-html5lib==1.1
-xdg==5.0.0
