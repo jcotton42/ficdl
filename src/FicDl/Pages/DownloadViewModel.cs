@@ -15,6 +15,7 @@ namespace FicDl.Pages {
         private int _chapterCount = 3;
         private bool _canDownload = true;
         private readonly IWindowManager _windowManager;
+        private readonly DownloadProgressViewModel _downloadProgressViewModel;
 
         public string? Url { get; set; }
         public string? CoverPath {
@@ -30,12 +31,13 @@ namespace FicDl.Pages {
             set => SetAndNotify(ref _chapterCount, value);
         }
 
-        public DownloadViewModel(IWindowManager windowManager) {
-            _windowManager = windowManager;
-        }
+    public DownloadViewModel(IWindowManager windowManager, DownloadProgressViewModel downloadProgressViewModel) {
+        _windowManager = windowManager;
+        _downloadProgressViewModel = downloadProgressViewModel;
+    }
 
         public void BrowseForCover() {
-            var dlg = new OpenFileDialog() {
+            var dlg = new OpenFileDialog {
                 DereferenceLinks = true,
                 Filter = "JPG and PNG Images|*.jpg;*.jpeg;*.png",
                 Multiselect = false,
@@ -52,8 +54,8 @@ namespace FicDl.Pages {
             set => SetAndNotify(ref _canDownload, value);
         }
         public void Download() {
-            var downloader = new DownloadProgressViewModel(Url);
-            _windowManager.ShowDialog(downloader);
+            _downloadProgressViewModel.PrepareForDownload(Url);
+            _windowManager.ShowDialog(_downloadProgressViewModel);
         }
     }
 }

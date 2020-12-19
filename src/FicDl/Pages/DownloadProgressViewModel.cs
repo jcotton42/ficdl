@@ -12,20 +12,20 @@ using System.Threading.Tasks;
 
 namespace FicDl.Pages {
     public class DownloadProgressViewModel : Screen {
-        private readonly CancellationTokenSource _cancelSource;
-        private readonly string _uri;
-        private string _storyTitle;
-        private string _storyAuthor;
+        private CancellationTokenSource? _cancelSource;
+        private string _uri;
+        private string? _storyTitle;
+        private string? _storyAuthor;
         private int _currentChapterNumber;
         private int _chapterCount;
-        private string _currentChapterTitle;
+        private string? _currentChapterTitle;
         private bool _isIndeterminate;
 
-        public string StoryTitle {
+        public string? StoryTitle {
             get => _storyTitle;
             set => SetAndNotify(ref _storyTitle, value);
         }
-        public string StoryAuthor {
+        public string? StoryAuthor {
             get => _storyAuthor;
             set => SetAndNotify(ref _storyAuthor, value);
         }
@@ -37,7 +37,7 @@ namespace FicDl.Pages {
             get => _chapterCount;
             set => SetAndNotify(ref _chapterCount, value);
         }
-        public string CurrentChapterTitle {
+        public string? CurrentChapterTitle {
             get => _currentChapterTitle;
             set => SetAndNotify(ref _currentChapterTitle, value);
         }
@@ -46,13 +46,21 @@ namespace FicDl.Pages {
             set => SetAndNotify(ref _isIndeterminate, value);
         }
 
-        public DownloadProgressViewModel(string uri) {
-            _cancelSource = new CancellationTokenSource();
-            _uri = uri;
-        }
-
         public void CancelDownload() {
             _cancelSource.Cancel();
+        }
+
+        public void PrepareForDownload(string uri) {
+            ChapterCount = int.MaxValue;
+            CurrentChapterNumber = 0;
+            StoryTitle = null;
+            StoryAuthor = null;
+            CurrentChapterTitle = null;
+            IsIndeterminate = false;
+
+            _uri = uri;
+            _cancelSource?.Dispose();
+            _cancelSource = new CancellationTokenSource();
         }
 
         private async void DownloadStory() {
@@ -99,7 +107,7 @@ namespace FicDl.Pages {
             RequestClose(true);
         }
 
-        protected override void OnInitialActivate() {
+        protected override void OnActivate() {
             DownloadStory();
         }
     }
