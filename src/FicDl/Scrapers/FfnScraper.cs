@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace FicDl.Scrapers {
-    public class FfnScraper {
+    public class FfnScraper : IScraper {
         private static readonly Regex CenterStyle = new Regex(@"text-align\s*:\s*center", RegexOptions.IgnoreCase);
         private static readonly Regex UnderlineStyle = new Regex(@"text-decoration\s*:\s*underline", RegexOptions.IgnoreCase);
 
@@ -162,6 +162,10 @@ namespace FicDl.Scrapers {
             return DateTimeOffset.FromUnixTimeSeconds(
                 long.Parse(page.QuerySelector("#profile_top span[data-xutime]").GetAttribute("data-xutime"))
             );
+        }
+
+        public void Dispose() {
+            _context.Dispose();
         }
 
         public override string ToString() {

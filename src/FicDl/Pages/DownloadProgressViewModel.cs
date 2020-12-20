@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace FicDl.Pages {
     public class DownloadProgressViewModel : Screen {
+        private readonly ScraperFactory _scraperFactory;
         private CancellationTokenSource? _cancelSource;
         private string _uri;
         private string? _storyTitle;
@@ -46,6 +47,10 @@ namespace FicDl.Pages {
             set => SetAndNotify(ref _isIndeterminate, value);
         }
 
+        public DownloadProgressViewModel(ScraperFactory scraperFactory) {
+            _scraperFactory = scraperFactory;
+        }
+
         public void CancelDownload() {
             _cancelSource.Cancel();
         }
@@ -64,15 +69,7 @@ namespace FicDl.Pages {
         }
 
         private async void DownloadStory() {
-            var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.55");
-            var config = AngleSharp.Configuration.Default
-                .WithRequester(new HttpClientRequester(httpClient))
-                .WithDefaultLoader(new LoaderOptions {
-                    IsResourceLoadingEnabled = true
-                });
-
-            var scraper = new FfnScraper(BrowsingContext.New(config), new Uri(_uri));
+            using var scraper = _scraperFactory.CreateScraper(new Uri(_uri));
             var metadata = await scraper.GetMetadataAsync(_cancelSource.Token);
 
             StoryTitle = metadata.Title;
