@@ -17,6 +17,7 @@ class Args:
     output: Optional[Path]
     cover: Optional[Path]
     format: OutputFormat
+    update: bool
     verbose: bool
     font_family: str
     font_size: str
@@ -78,6 +79,8 @@ def parse_args() -> Args:
         help='the page size for non-reflowable formats (e.g. PDF). (default: %(default)s)',
     )
 
+    parser.add_argument('--update', action='store_true', help='installs the latest version of ficdl')
+
     parser.add_argument('-v', '--verbose', action='store_true', help='output information about chapter scraping, etc.')
     parser.add_argument('--version', action='version', version='%(prog)s {}'.format(__version__))
 
@@ -97,6 +100,7 @@ def parse_args() -> Args:
         output=parsed.output,
         cover=parsed.cover,
         format=format,
+        update=parsed.update,
         verbose=parsed.verbose,
         font_family=parsed.font_family,
         font_size=parsed.font_size,
