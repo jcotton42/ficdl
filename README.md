@@ -1,5 +1,10 @@
 # ficdl
 
+This project has been archived, as FFN's CloudFlare settings break it, it is left up
+for academic purposes.
+
+---
+
 A Python app for taking stories from fanfic sites and turning them into eBooks for a more comfortable reading experience.
 
 ## Usage
